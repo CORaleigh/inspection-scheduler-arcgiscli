@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Widgets
-import LayerList from '@arcgis/core/widgets/LayerList';
 import Locate from '@arcgis/core/widgets/Locate';
 import RouteTask from '@arcgis/core/tasks/RouteTask';
 import RouteParameters from '@arcgis/core/tasks/support/RouteParameters';
@@ -67,8 +66,16 @@ function createInspectionList(view: MapView) {
 }
 
 export function initWidgets(view: __esri.MapView): __esri.MapView {
-	const layerList = new LayerList({ view });
-	view.ui.add(layerList, 'top-right');
+	document.querySelector('calcite-radio-group')?.addEventListener('calciteRadioGroupChange', (e) => {
+		if ((e as any).detail === 'map') {
+			document.querySelector('#viewDiv')?.classList.remove('esri-hidden');
+			document.querySelector('#table')?.classList.add('esri-hidden');
+		} else {
+			document.querySelector('#viewDiv')?.classList.add('esri-hidden');
+			document.querySelector('#table')?.classList.remove('esri-hidden');
+		}
+	});
+
 	const locate = new Locate({ view: view });
 	view.ui.add(locate, 'top-left');
 	locate

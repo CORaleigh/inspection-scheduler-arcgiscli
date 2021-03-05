@@ -53,8 +53,23 @@ body {
   width: 100%;
   display: flex;
 }
-
+calcite-radio-group {
+  display: none;
+}
 calcite-input {
   max-width: 130px;
   margin: 1em;
+}
+
+@media only screen and (max-width: 545px) {
+  #viewDiv {
+    width: 100%;
+  }
+  #table {
+    width: 100%;
+  }
+  calcite-radio-group {
+    display: block;
+  }
+
 }

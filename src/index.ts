@@ -24,5 +24,17 @@ const view = new MapView({
 		},
 	},
 });
+if (window.innerWidth <= 768) {
+	document.querySelector('#viewDiv')?.classList.add('esri-hidden');
+}
+window.addEventListener('resize', () => {
+	if (window.innerWidth <= 768) {
+		document.querySelector('#viewDiv')?.classList.add('esri-hidden');
+		document.querySelector('#table')?.classList.remove('esri-hidden');
+	} else {
+		document.querySelector('#viewDiv')?.classList.remove('esri-hidden');
+		document.querySelector('#table')?.classList.remove('esri-hidden');
+	}
+});
 
 view.when(initWidgets);
