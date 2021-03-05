@@ -1,0 +1,1 @@
+System.register([],(function(n){"use strict";return{execute:function(){n("g",(function(){return function(n){return n.map((function(n){for(var t="",r=0;r<n;r++)t+=(65536*(1+Math.random())|0).toString(16).substring(1);return t})).join("-")}([2,1,1,1,3])}))}}}));

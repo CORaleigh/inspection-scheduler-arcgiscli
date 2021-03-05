@@ -1,0 +1,1 @@
+const c={sticky:"sticky"};var s;!function(s){s.circle="circle",s.square="square",s.grip="grip"}(s||(s={}));export{c as C,s as I};
