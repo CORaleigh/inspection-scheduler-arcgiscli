@@ -69,7 +69,7 @@ calcite-input {
     width: 100%;
   }
   calcite-radio-group {
-    display: block;
+    display: flex;
   }
 
 }
