@@ -9,7 +9,7 @@ export const featureLayer = new FeatureLayer({
 	},
 	layerId: 0,
 	definitionExpression: `PrimaryInspector = 'Timithy Driver'`,
-	// refreshInterval: 1 / 60,
+	refreshInterval: 0.1,
 });
 
 export const featureTable = new FeatureLayer({
@@ -18,7 +18,7 @@ export const featureTable = new FeatureLayer({
 	},
 	layerId: 1,
 	definitionExpression: `PrimaryInspector = 'Timithy Driver'`,
-	// refreshInterval: 1 / 60,
+	refreshInterval: 0.1,
 });
 
 export const map = new ArcGISMap({

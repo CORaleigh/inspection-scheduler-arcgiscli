@@ -3,18 +3,22 @@
 import Accessor from '@arcgis/core/core/Accessor';
 
 import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
-import { whenDefinedOnce } from '@arcgis/core/core/watchUtils';
+import { whenDefinedOnce, watch } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
 @subclass('app.widgets.InspectionList.InspectionListViewModel')
 export default class InspectionListViewModel extends Accessor {
 	@property() view!: __esri.MapView | __esri.SceneView;
 	@property() inspections!: __esri.Graphic[];
+	@property() inspectors!: __esri.Graphic[];
+
 	@property() layer!: __esri.FeatureLayer;
 	@property() table!: __esri.FeatureLayer;
+	@property() locate!: __esri.Locate;
 
 	constructor(params?: any) {
 		super(params);
 		whenDefinedOnce(this, 'view', this.init.bind(this));
+		watch(this, 'inspections', this.inspectionsUpdated.bind(this));
 	}
 
 	updateOrder = (
@@ -76,6 +80,12 @@ export default class InspectionListViewModel extends Accessor {
 		});
 
 		this.layer.refresh();
+	};
+	comboCreated = (elm: Element) => {
+		elm.addEventListener('calciteComboboxItemChange', (e: any) => {
+			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute('value')}'`;
+			this.locate.locate();
+		});
 	};
 	saveCreated = (elm: Element) => {
 		elm.addEventListener('click', () => {
@@ -148,14 +158,24 @@ export default class InspectionListViewModel extends Accessor {
 			const observer: MutationObserver = new MutationObserver((mutations) => {
 				mutations.forEach((mutation) => {
 					const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
+					const chip = document.createElement('calcite-chip');
+					chip.setAttribute('scale', 's');
+					chip.setAttribute('appearance', 'solid');
+					chip.setAttribute('color', inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red');
+					chip.setAttribute('dir', 'ltr');
+					chip.setAttribute('calcite-hydrated', '');
+					chip.textContent = inspection.getAttribute('count');
 
-					if (node)
+					if (node) {
 						node.innerHTML +=
 							'<style>.description{white-space: pre-line;}calcite-chip{top:40%;position:relative;width:24px;height:24px;margin-left:1em;}</style>';
-					if (node)
-						node.innerHTML += `<calcite-chip scale="s" appearance="solid" color="${
-							inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red'
-						}" dir="ltr" calcite-hydrated="">${inspection.getAttribute('count')}</calcite-chip>`;
+						const label = node.querySelector('.label');
+						if (label) {
+							node?.insertBefore(chip, label);
+						} else {
+							node?.appendChild(chip);
+						}
+					}
 				});
 				observer.disconnect();
 			});
@@ -165,8 +185,6 @@ export default class InspectionListViewModel extends Accessor {
 		});
 	}
 	listCreated = (elm: Element): void => {
-		this.inspectionsUpdated(this.inspections);
-
 		elm.addEventListener('calciteListChange', (e) => {
 			this.layer
 				.queryFeatures({
