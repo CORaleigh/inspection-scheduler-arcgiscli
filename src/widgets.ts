@@ -30,7 +30,7 @@ function createInspectionList(view: MapView, locate: Locate, inspectionList: Ins
 						objectIds.forEach((objectId) => {
 							let description = '';
 							let completed = 'True';
-							result[objectId].features.forEach((relatedFeature: Graphic) => {
+							result[objectId]?.features.forEach((relatedFeature: Graphic) => {
 								if (relatedFeature.getAttribute('InspectionStatus') != 'Canceled') {
 									description += `${relatedFeature.getAttribute(
 										'LinkNumber',
@@ -87,7 +87,7 @@ function createInspectionList(view: MapView, locate: Locate, inspectionList: Ins
 						let description = '';
 						const reloids: number[] = [];
 						let completed = 'True';
-						result[objectId].features.forEach((relatedFeature: Graphic) => {
+						result[objectId]?.features.forEach((relatedFeature: Graphic) => {
 							if (relatedFeature.getAttribute('InspectionStatus') != 'Canceled') {
 								description += `${relatedFeature.getAttribute(
 									'LinkNumber',
