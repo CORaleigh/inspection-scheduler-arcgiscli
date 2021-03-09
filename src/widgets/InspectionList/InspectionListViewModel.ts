@@ -3,7 +3,7 @@
 import Accessor from '@arcgis/core/core/Accessor';
 
 import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
-import { whenDefinedOnce, watch } from '@arcgis/core/core/watchUtils';
+import { whenDefinedOnce, pausable } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
 @subclass('app.widgets.InspectionList.InspectionListViewModel')
 export default class InspectionListViewModel extends Accessor {
@@ -14,11 +14,12 @@ export default class InspectionListViewModel extends Accessor {
 	@property() layer!: __esri.FeatureLayer;
 	@property() table!: __esri.FeatureLayer;
 	@property() locate!: __esri.Locate;
+	@property() inspectionUpdate!: __esri.PausableWatchHandle;
 
 	constructor(params?: any) {
 		super(params);
 		whenDefinedOnce(this, 'view', this.init.bind(this));
-		watch(this, 'inspections', this.inspectionsUpdated.bind(this));
+		this.inspectionUpdate = pausable(this, 'inspections', this.inspectionsUpdated.bind(this));
 	}
 
 	updateOrder = (
@@ -83,7 +84,12 @@ export default class InspectionListViewModel extends Accessor {
 	};
 	comboCreated = (elm: Element) => {
 		elm.addEventListener('calciteComboboxItemChange', (e: any) => {
-			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute('value')}'`;
+			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
+				'value',
+			)}' and InspectionStatus != 'Canceled'`;
+			this.table.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
+				'value',
+			)}' and InspectionStatus != 'Canceled'`;
 			this.locate.locate();
 		});
 	};

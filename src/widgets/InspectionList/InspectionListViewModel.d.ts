@@ -7,6 +7,7 @@ export default class InspectionListViewModel extends Accessor {
     layer: __esri.FeatureLayer;
     table: __esri.FeatureLayer;
     locate: __esri.Locate;
+    inspectionUpdate: __esri.PausableWatchHandle;
     constructor(params?: any);
     updateOrder: (newOrder: number, oldOrder: number, objectId: number, inspection: __esri.Graphic) => number | undefined;
     inputChanged: (e: any) => void;

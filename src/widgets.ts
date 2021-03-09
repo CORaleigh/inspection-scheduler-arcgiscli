@@ -11,6 +11,61 @@ import { featureLayer, featureTable } from './data/app';
 import InspectionList from './widgets/InspectionList';
 import MapView from '@arcgis/core/views/MapView';
 function createInspectionList(view: MapView, locate: Locate, inspectionList: InspectionList) {
+	setInterval(() => {
+		featureLayer
+			.queryFeatures({
+				outFields: ['OBJECTID'],
+				where: featureLayer.definitionExpression,
+				returnGeometry: false,
+			})
+			.then((featureSet: __esri.FeatureSet) => {
+				inspectionList.inspectionUpdate.pause();
+				const objectIds: number[] = [];
+				featureSet.features.forEach((feature) => {
+					objectIds.push(feature.getObjectId());
+				});
+				featureLayer
+					.queryRelatedFeatures({ relationshipId: 0, objectIds: objectIds, outFields: ['*'] })
+					.then((result) => {
+						objectIds.forEach((objectId) => {
+							let description = '';
+							let completed = 'True';
+							result[objectId].features.forEach((relatedFeature: Graphic) => {
+								if (relatedFeature.getAttribute('InspectionStatus') != 'Canceled') {
+									description += `${relatedFeature.getAttribute(
+										'LinkNumber',
+									)} - ${relatedFeature.getAttribute(
+										'InspectionType',
+									)} - ${relatedFeature.getAttribute('InspectionStatus')}\n`;
+									if (relatedFeature.getAttribute('IsCompleted') === 'False') {
+										completed = 'False';
+									}
+								}
+							});
+							const locationFeature = inspectionList.inspections.find((feature) => {
+								return feature.getObjectId() === objectId;
+							});
+
+							locationFeature?.setAttribute('description', description);
+							locationFeature?.setAttribute('IsCompleted', completed);
+						});
+						inspectionList.inspections.forEach((inspection) => {
+							const item = document.querySelector(
+								`calcite-value-list-item[value="${inspection.getAttribute('OBJECTID')}"]`,
+							);
+							item?.setAttribute('description', `${inspection.getAttribute('description')}`);
+							const chip = item?.shadowRoot
+								?.querySelector('calcite-pick-list-item')
+								?.shadowRoot?.querySelector('calcite-chip');
+							chip?.setAttribute(
+								'color',
+								inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red',
+							);
+						});
+						inspectionList.inspectionUpdate.resume();
+					});
+			});
+	}, 60000);
 	featureLayer.queryExtent({ where: featureLayer.definitionExpression }).then((response) => {
 		view.goTo(response.extent);
 	});

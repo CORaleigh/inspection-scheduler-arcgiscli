@@ -16,6 +16,7 @@ export default class InspectionList extends Widget {
     layer: __esri.FeatureLayer[];
     table: __esri.FeatureLayer[];
     locate: __esri.Locate;
+    inspectionUpdate: __esri.PausableWatchHandle;
     viewModel: InspectionListViewModel;
     constructor(properties?: InspectionListProperties);
     render(): tsx.JSX.Element;

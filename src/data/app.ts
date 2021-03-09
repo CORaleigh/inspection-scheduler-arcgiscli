@@ -17,7 +17,7 @@ export const featureTable = new FeatureLayer({
 		id: 'fb4ba67c7aa24553830eea072bced580',
 	},
 	layerId: 1,
-	definitionExpression: `PrimaryInspector = 'Timithy Driver'`,
+	definitionExpression: `PrimaryInspector = 'Timithy Driver' and InspectionStatus != 'Canceled'`,
 	refreshInterval: 0.1,
 });
 

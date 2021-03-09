@@ -34,6 +34,8 @@ export default class InspectionList extends Widget {
 	table!: __esri.FeatureLayer[];
 	@aliasOf('viewModel.locate')
 	locate!: __esri.Locate;
+	@aliasOf('viewModel.inspectionUpdate')
+	inspectionUpdate!: __esri.PausableWatchHandle;
 	@property({
 		type: InspectionListViewModel,
 	})
