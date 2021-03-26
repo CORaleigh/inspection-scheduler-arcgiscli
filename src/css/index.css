@@ -11,6 +11,7 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
+  outline: none;
 }
 
 body {
@@ -61,9 +62,23 @@ calcite-input {
   margin: 1em;
 }
 
-calcite-panel {
+#inspectionPanel {
   max-height: calc(100% - 111px);
   overflow: auto;
+}
+.message {
+  margin: 1em;
+  display: inline-flex;
+}
+
+.inner {
+  padding-top: 4px;
+  vertical-align: middle;
+}
+
+.completed-icon {
+  color: var(--calcite-ui-success);
+  margin-right:1em;
 }
 
 @media only screen and (max-width: 545px) {

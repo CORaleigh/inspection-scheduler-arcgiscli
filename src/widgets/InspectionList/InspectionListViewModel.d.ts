@@ -8,12 +8,16 @@ export default class InspectionListViewModel extends Widget {
     table: __esri.FeatureLayer;
     locate: __esri.Locate;
     inspectionUpdate: __esri.PausableWatchHandle;
+    layerView: __esri.FeatureLayerView;
+    highlights: any;
     constructor(params?: any);
+    comboboxCreated: () => void;
+    inspectorsLoaded: (inspectors: __esri.Graphic[]) => void;
     updateOrder: (newOrder: number, oldOrder: number, objectId: number, inspection: __esri.Graphic) => number | undefined;
     inputChanged: (e: any) => void;
-    comboCreated: (elm: Element) => void;
     saveCreated: (elm: Element) => void;
     inspectionsUpdated(inspections: __esri.Graphic[]): void;
+    calciteListChanged: (objectId: number) => void;
     listCreated: (elm: Element) => void;
     init(view: __esri.MapView | __esri.SceneView): void;
 }

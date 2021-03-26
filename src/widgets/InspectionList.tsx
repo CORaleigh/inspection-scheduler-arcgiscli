@@ -24,6 +24,7 @@ const CSS = {
 export default class InspectionList extends Widget {
 	@aliasOf('viewModel.view')
 	view!: __esri.MapView | __esri.SceneView;
+	@renderable()
 	@aliasOf('viewModel.inspections')
 	inspections!: __esri.Graphic[];
 	@aliasOf('viewModel.inspectors')
@@ -47,10 +48,6 @@ export default class InspectionList extends Widget {
 		super(properties);
 	}
 
-	panelCreated = (element: Element): void => {
-		//	element.shadowRoot?.querySelector('.container')?.setAttribute('style', 'height: calc(100% - 100px)');
-	};
-
 	render(): tsx.JSX.Element {
 		return (
 			<div class={CSS.base}>
@@ -62,26 +59,17 @@ export default class InspectionList extends Widget {
 					max-items="0"
 					dir="ltr"
 					calcite-hydrated=""
-				>
-					{this.inspectors.map((inspector) => {
-						return (
-							<calcite-combobox-item
-								value={inspector.getAttribute('PrimaryInspector')}
-								text-label={inspector.getAttribute('PrimaryInspector')}
-								key={inspector.getAttribute('PrimaryInspector')}
-								selected={inspector.getAttribute('PrimaryInspector') === 'Timithy Driver'}
-								afterCreate={this.viewModel.comboCreated}
-							></calcite-combobox-item>
-						);
-					})}
-				</calcite-combobox>
-				<calcite-panel
-					dir="ltr"
-					height-scale="m"
-					intl-close="Close"
-					theme="light"
-					afterCreate={this.panelCreated}
-				>
+					afterCreate={this.viewModel.comboboxCreated}
+				></calcite-combobox>
+				{this.inspections.length ? (
+					''
+				) : (
+					<div class="message">
+						<calcite-icon icon="checkCircleF" class="completed-icon"></calcite-icon>{' '}
+						<div class="inner">All inspections have been completed</div>
+					</div>
+				)}
+				<calcite-panel dir="ltr" height-scale="m" intl-close="Close" theme="light" id="inspectionPanel">
 					<calcite-value-list
 						dir="ltr"
 						drag-enabled=""
