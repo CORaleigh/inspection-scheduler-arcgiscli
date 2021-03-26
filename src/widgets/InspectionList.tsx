@@ -1,6 +1,6 @@
 import { aliasOf, property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
 
-import { renderable, tsx } from '@arcgis/core/widgets/support/widget';
+import { renderable, tsx, vmEvent } from '@arcgis/core/widgets/support/widget';
 
 import Widget from '@arcgis/core/widgets/Widget';
 
@@ -39,12 +39,17 @@ export default class InspectionList extends Widget {
 	@property({
 		type: InspectionListViewModel,
 	})
+	@vmEvent(['inspector-changed'])
 	@renderable()
 	viewModel: InspectionListViewModel = new InspectionListViewModel();
 
 	constructor(properties?: InspectionListProperties) {
 		super(properties);
 	}
+
+	panelCreated = (element: Element): void => {
+		//	element.shadowRoot?.querySelector('.container')?.setAttribute('style', 'height: calc(100% - 100px)');
+	};
 
 	render(): tsx.JSX.Element {
 		return (
@@ -70,7 +75,13 @@ export default class InspectionList extends Widget {
 						);
 					})}
 				</calcite-combobox>
-				<calcite-panel dir="ltr" height-scale="m" intl-close="Close" theme="light">
+				<calcite-panel
+					dir="ltr"
+					height-scale="m"
+					intl-close="Close"
+					theme="light"
+					afterCreate={this.panelCreated}
+				>
 					<calcite-value-list
 						dir="ltr"
 						drag-enabled=""

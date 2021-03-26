@@ -32,6 +32,7 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* map view */
@@ -46,7 +47,6 @@ body {
   margin: 0;
   width: 50%;
 
-  overflow: auto;
 }
 .content {
   height: 100%;
@@ -59,6 +59,11 @@ calcite-radio-group {
 calcite-input {
   max-width: 130px;
   margin: 1em;
+}
+
+calcite-panel {
+  max-height: calc(100% - 111px);
+  overflow: auto;
 }
 
 @media only screen and (max-width: 545px) {

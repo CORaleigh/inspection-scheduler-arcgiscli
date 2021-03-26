@@ -155,107 +155,111 @@ export function initWidgets(view: __esri.MapView): __esri.MapView {
 		locate: locate,
 	});
 	getInspectors(inspectionList);
-	locate.on('locate', (evt: any) => {
-		const coords = webMercatorUtils.lngLatToXY(evt.position.coords.longitude, evt.position.coords.latitude);
-
-		const loc: Graphic = new Graphic({
-			geometry: new Point({ x: coords[0], y: coords[1], spatialReference: { wkid: 102100 } }),
-			attributes: { name: 'Current Location' },
-		});
-		const stops: FeatureSet = new FeatureSet({ features: [loc] });
-		featureLayer
-			.queryFeatureCount({ where: `${featureLayer.definitionExpression} and InspectionOrder is not  null` })
-			.then((count) => {
-				if (count === 0) {
-					featureLayer.queryFeatures().then((featureSet) => {
-						if (featureSet.features.length > 0) {
-							featureSet.features.forEach((feature) => {
-								stops.features.push(
-									new Graphic({
-										geometry: feature.geometry,
-										attributes: { name: feature.getAttribute('Address') },
-									}),
-								);
-							});
-							const route = new RouteTask({
-								url:
-									'https://mapstest.raleighnc.gov/arcgis/rest/services/Street_Network/NAServer/Route',
-							});
-							route
-								.solve(
-									new RouteParameters({
-										returnRoutes: true,
-										returnStops: true,
-										findBestSequence: true,
-										stops: stops,
-										preserveFirstStop: true,
-									}),
-								)
-								.then((result) => {
-									const stops = (result as any).routeResults[0].stops;
-									if (stops[0].getAttribute('Name') === 'Current Location') {
-										stops.shift();
-									}
-
-									stops.forEach((stop: any, i: number) => {
-										featureSet.features[i].setAttribute(
-											'InspectionOrder',
-											stop.getAttribute('Sequence') - 1,
-										);
-										console.log(stop.getAttribute('Name'), stop.getAttribute('Sequence'));
-									});
-									const locations: Graphic[] = [];
-									featureSet.features.forEach((feature) => {
-										locations.push(
-											new Graphic({
-												attributes: {
-													OBJECTID: feature.getAttribute('OBJECTID'),
-													InspectionOrder: feature.getAttribute('InspectionOrder'),
-												},
-											}),
-										);
-									});
-									featureLayer.applyEdits({ updateFeatures: locations }).then(() => {
-										const oids: number[] = [];
-										featureSet.features.forEach((feature) => {
-											oids.push(feature.getAttribute('OBJECTID'));
-										});
-										featureLayer
-											.queryRelatedFeatures({
-												relationshipId: 0,
-												objectIds: oids,
-												outFields: ['OBJECTID', 'InspectionOrder'],
-											})
-											.then((result) => {
-												const inspections: Graphic[] = [];
-												oids.forEach((oid) => {
-													const inspection = featureSet.features.find((feature: Graphic) => {
-														return feature.getAttribute('OBJECTID') === oid;
-													});
-													const order = inspection?.getAttribute('InspectionOrder');
-													if (result[oid]) {
-														result[oid].features.forEach((feature: Graphic) => {
-															feature.setAttribute('InspectionOrder', order);
-															inspections.push(feature);
-														});
-													}
-												});
-												featureTable
-													.applyEdits({ updateFeatures: inspections })
-													.then((result) => {
-														console.log(result);
-														createInspectionList(view, locate, inspectionList);
-													});
-											});
-									});
-								});
-						}
-					});
-				} else {
-					createInspectionList(view, locate, inspectionList);
-				}
-			});
+	inspectionList.on('inspector-changed', () => {
+		createInspectionList(view, locate, inspectionList);
 	});
-	locate.locate();
+	createInspectionList(view, locate, inspectionList);
+	// locate.on('locate', (evt: any) => {
+	// 	const coords = webMercatorUtils.lngLatToXY(evt.position.coords.longitude, evt.position.coords.latitude);
+
+	// 	const loc: Graphic = new Graphic({
+	// 		geometry: new Point({ x: coords[0], y: coords[1], spatialReference: { wkid: 102100 } }),
+	// 		attributes: { name: 'Current Location' },
+	// 	});
+	// 	const stops: FeatureSet = new FeatureSet({ features: [loc] });
+	// 	featureLayer
+	// 		.queryFeatureCount({ where: `${featureLayer.definitionExpression} and InspectionOrder is not  null` })
+	// 		.then((count) => {
+	// 			if (count === 0) {
+	// 				featureLayer.queryFeatures().then((featureSet) => {
+	// 					if (featureSet.features.length > 0) {
+	// 						featureSet.features.forEach((feature) => {
+	// 							stops.features.push(
+	// 								new Graphic({
+	// 									geometry: feature.geometry,
+	// 									attributes: { name: feature.getAttribute('Address') },
+	// 								}),
+	// 							);
+	// 						});
+	// 						const route = new RouteTask({
+	// 							url:
+	// 								'https://mapstest.raleighnc.gov/arcgis/rest/services/Street_Network/NAServer/Route',
+	// 						});
+	// 						route
+	// 							.solve(
+	// 								new RouteParameters({
+	// 									returnRoutes: true,
+	// 									returnStops: true,
+	// 									findBestSequence: true,
+	// 									stops: stops,
+	// 									preserveFirstStop: true,
+	// 								}),
+	// 							)
+	// 							.then((result) => {
+	// 								const stops = (result as any).routeResults[0].stops;
+	// 								if (stops[0].getAttribute('Name') === 'Current Location') {
+	// 									stops.shift();
+	// 								}
+
+	// 								stops.forEach((stop: any, i: number) => {
+	// 									featureSet.features[i].setAttribute(
+	// 										'InspectionOrder',
+	// 										stop.getAttribute('Sequence') - 1,
+	// 									);
+	// 									console.log(stop.getAttribute('Name'), stop.getAttribute('Sequence'));
+	// 								});
+	// 								const locations: Graphic[] = [];
+	// 								featureSet.features.forEach((feature) => {
+	// 									locations.push(
+	// 										new Graphic({
+	// 											attributes: {
+	// 												OBJECTID: feature.getAttribute('OBJECTID'),
+	// 												InspectionOrder: feature.getAttribute('InspectionOrder'),
+	// 											},
+	// 										}),
+	// 									);
+	// 								});
+	// 								featureLayer.applyEdits({ updateFeatures: locations }).then(() => {
+	// 									const oids: number[] = [];
+	// 									featureSet.features.forEach((feature) => {
+	// 										oids.push(feature.getAttribute('OBJECTID'));
+	// 									});
+	// 									featureLayer
+	// 										.queryRelatedFeatures({
+	// 											relationshipId: 0,
+	// 											objectIds: oids,
+	// 											outFields: ['OBJECTID', 'InspectionOrder'],
+	// 										})
+	// 										.then((result) => {
+	// 											const inspections: Graphic[] = [];
+	// 											oids.forEach((oid) => {
+	// 												const inspection = featureSet.features.find((feature: Graphic) => {
+	// 													return feature.getAttribute('OBJECTID') === oid;
+	// 												});
+	// 												const order = inspection?.getAttribute('InspectionOrder');
+	// 												if (result[oid]) {
+	// 													result[oid].features.forEach((feature: Graphic) => {
+	// 														feature.setAttribute('InspectionOrder', order);
+	// 														inspections.push(feature);
+	// 													});
+	// 												}
+	// 											});
+	// 											featureTable
+	// 												.applyEdits({ updateFeatures: inspections })
+	// 												.then((result) => {
+	// 													console.log(result);
+	// 													createInspectionList(view, locate, inspectionList);
+	// 												});
+	// 										});
+	// 								});
+	// 							});
+	// 					}
+	// 				});
+	// 			} else {
+	// 				createInspectionList(view, locate, inspectionList);
+	// 			}
+	// 		});
+	// });
+	// locate.locate();
 	return view;
 }

@@ -1,6 +1,6 @@
-import Accessor from '@arcgis/core/core/Accessor';
 import Graphic from '@arcgis/core/Graphic';
-export default class InspectionListViewModel extends Accessor {
+import Widget from '@arcgis/core/widgets/Widget';
+export default class InspectionListViewModel extends Widget {
     view: __esri.MapView | __esri.SceneView;
     inspections: __esri.Graphic[];
     inspectors: __esri.Graphic[];

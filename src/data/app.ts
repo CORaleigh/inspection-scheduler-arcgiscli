@@ -8,7 +8,7 @@ export const featureLayer = new FeatureLayer({
 		id: 'fb4ba67c7aa24553830eea072bced580',
 	},
 	layerId: 0,
-	definitionExpression: `PrimaryInspector = 'Timithy Driver'`,
+	definitionExpression: `PrimaryInspector = 'Timithy Driver' and IsCompleted = 'False'`,
 	refreshInterval: 0.1,
 });
 
@@ -17,7 +17,7 @@ export const featureTable = new FeatureLayer({
 		id: 'fb4ba67c7aa24553830eea072bced580',
 	},
 	layerId: 1,
-	definitionExpression: `PrimaryInspector = 'Timithy Driver' and InspectionStatus <> 'Canceled'`,
+	definitionExpression: `PrimaryInspector = 'Timithy Driver' and IsCompleted = 'False'`,
 	refreshInterval: 0.1,
 });
 

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Accessor from '@arcgis/core/core/Accessor';
 
 import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
 import { whenDefinedOnce, pausable } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
+import Widget from '@arcgis/core/widgets/Widget';
 @subclass('app.widgets.InspectionList.InspectionListViewModel')
-export default class InspectionListViewModel extends Accessor {
+export default class InspectionListViewModel extends Widget {
 	@property() view!: __esri.MapView | __esri.SceneView;
 	@property() inspections!: __esri.Graphic[];
 	@property() inspectors!: __esri.Graphic[];
@@ -86,11 +86,11 @@ export default class InspectionListViewModel extends Accessor {
 		elm.addEventListener('calciteComboboxItemChange', (e: any) => {
 			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
 				'value',
-			)}' and InspectionStatus != 'Canceled'`;
+			)}' and  IsCompleted = 'False'`;
 			this.table.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
 				'value',
-			)}' and InspectionStatus != 'Canceled'`;
-			this.locate.locate();
+			)}' and  IsCompleted = 'False'`;
+			this.emit('inspector-changed', null);
 		});
 	};
 	saveCreated = (elm: Element) => {
@@ -144,7 +144,12 @@ export default class InspectionListViewModel extends Accessor {
 		});
 		inspections.forEach((inspection) => {
 			const item = document.createElement('calcite-value-list-item');
-			item.setAttribute('label', inspection.attributes.Address);
+			item.setAttribute(
+				'label',
+				`${inspection.getAttribute('Address')} (${inspection.getAttribute('count')} ${
+					inspection.getAttribute('count') > 1 ? 'inspections' : 'inspection'
+				})`,
+			);
 			item.setAttribute('description', `${inspection.getAttribute('description')}`);
 			item.setAttribute('value', inspection.getAttribute('OBJECTID'));
 			item.dataset.oids = inspection.getAttribute('objectIds');
@@ -164,23 +169,23 @@ export default class InspectionListViewModel extends Accessor {
 			const observer: MutationObserver = new MutationObserver((mutations) => {
 				mutations.forEach((mutation) => {
 					const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
-					const chip = document.createElement('calcite-chip');
-					chip.setAttribute('scale', 's');
-					chip.setAttribute('appearance', 'solid');
-					chip.setAttribute('color', inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red');
-					chip.setAttribute('dir', 'ltr');
-					chip.setAttribute('calcite-hydrated', '');
-					chip.textContent = inspection.getAttribute('count');
+					// const chip = document.createElement('calcite-chip');
+					// chip.setAttribute('scale', 's');
+					// chip.setAttribute('appearance', 'solid');
+					// chip.setAttribute('color', inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red');
+					// chip.setAttribute('dir', 'ltr');
+					// chip.setAttribute('calcite-hydrated', '');
+					// chip.textContent = inspection.getAttribute('count');
 
 					if (node) {
 						node.innerHTML +=
-							'<style>.description{white-space: pre-line;}calcite-chip{top:40%;position:relative;width:24px;height:24px;margin-left:1em;}</style>';
-						const label = node.querySelector('.label');
-						if (label) {
-							node?.insertBefore(chip, label);
-						} else {
-							node?.appendChild(chip);
-						}
+							'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}'; //calcite-chip{top:40%;position:relative;width:24px;height:24px;margin-left:1em;}</style>';
+						// const label = node.querySelector('.label');
+						// if (label) {
+						// 	node?.insertBefore(chip, label);
+						// } else {
+						// 	node?.appendChild(chip);
+						// }
 					}
 				});
 				observer.disconnect();

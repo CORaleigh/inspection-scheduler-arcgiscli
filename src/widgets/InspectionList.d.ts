@@ -19,5 +19,6 @@ export default class InspectionList extends Widget {
     inspectionUpdate: __esri.PausableWatchHandle;
     viewModel: InspectionListViewModel;
     constructor(properties?: InspectionListProperties);
+    panelCreated: (element: Element) => void;
     render(): tsx.JSX.Element;
 }
