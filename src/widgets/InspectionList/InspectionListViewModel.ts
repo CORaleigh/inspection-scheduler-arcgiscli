@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
-import { whenDefinedOnce, pausable, whenTrueOnce, whenOnce, once } from '@arcgis/core/core/watchUtils';
+import { whenDefinedOnce, pausable, once } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
 import Widget from '@arcgis/core/widgets/Widget';
 @subclass('app.widgets.InspectionList.InspectionListViewModel')
@@ -10,10 +10,9 @@ export default class InspectionListViewModel extends Widget {
 	@property() view!: __esri.MapView | __esri.SceneView;
 	@property() inspections!: __esri.Graphic[];
 	@property() inspectors!: __esri.Graphic[];
-
+	@property() name!: string;
 	@property() layer!: __esri.FeatureLayer;
 	@property() table!: __esri.FeatureLayer;
-	@property() locate!: __esri.Locate;
 	@property() inspectionUpdate!: __esri.PausableWatchHandle;
 	layerView!: __esri.FeatureLayerView;
 	highlights!: any;
@@ -26,19 +25,8 @@ export default class InspectionListViewModel extends Widget {
 		once(this, 'inspectors', this.inspectorsLoaded.bind(this));
 	};
 	inspectorsLoaded = (inspectors: __esri.Graphic[]) => {
+		this.inspectors = [...this.inspectors, ...inspectors];
 		const combobox = document.querySelector('calcite-combobox');
-		inspectors.forEach((inspector) => {
-			const item = document.createElement('calcite-combobox-item');
-			item.setAttribute('value', inspector.getAttribute('PrimaryInspector'));
-			item.setAttribute('text-label', inspector.getAttribute('PrimaryInspector'));
-			item.setAttribute('key', inspector.getAttribute('PrimaryInspector'));
-			item.setAttribute('placeholder', 'Select inspector');
-
-			if (inspector.getAttribute('PrimaryInspector') === 'Timithy Driver') {
-				item.setAttribute('selected', '');
-			}
-			combobox?.append(item);
-		});
 		combobox?.addEventListener('calciteComboboxItemChange', (e: any) => {
 			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
 				'value',
@@ -48,6 +36,8 @@ export default class InspectionListViewModel extends Widget {
 			)}' and  IsCompleted = 'False'`;
 			this.emit('inspector-changed', null);
 		});
+
+		combobox?.shadowRoot?.querySelector('.list-container')?.setAttribute('style', 'height: 80vh');
 	};
 
 	updateOrder = (
@@ -196,23 +186,9 @@ export default class InspectionListViewModel extends Widget {
 			const observer: MutationObserver = new MutationObserver((mutations) => {
 				mutations.forEach((mutation) => {
 					const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
-					// const chip = document.createElement('calcite-chip');
-					// chip.setAttribute('scale', 's');
-					// chip.setAttribute('appearance', 'solid');
-					// chip.setAttribute('color', inspection.getAttribute('IsCompleted') === 'True' ? 'green' : 'red');
-					// chip.setAttribute('dir', 'ltr');
-					// chip.setAttribute('calcite-hydrated', '');
-					// chip.textContent = inspection.getAttribute('count');
-
 					if (node) {
 						node.innerHTML +=
-							'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}'; //calcite-chip{top:40%;position:relative;width:24px;height:24px;margin-left:1em;}</style>';
-						// const label = node.querySelector('.label');
-						// if (label) {
-						// 	node?.insertBefore(chip, label);
-						// } else {
-						// 	node?.appendChild(chip);
-						// }
+							'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
 					}
 				});
 				observer.disconnect();
@@ -223,9 +199,6 @@ export default class InspectionListViewModel extends Widget {
 			input.addEventListener('calciteInputBlur', this.inputChanged);
 		});
 		this.layer.applyEdits({ updateFeatures: inspections }).then(() => {
-			//this.layer.refresh();
-			//this.layerView?.layer?.refresh();
-			//this.emit('inspector-changed', null);
 			this.inspectionUpdate.resume();
 			this.layer.refresh();
 		});
@@ -235,7 +208,7 @@ export default class InspectionListViewModel extends Widget {
 			this.layer
 				.queryFeatures({
 					objectIds: [objectId],
-					outFields: ['OBJECTID'],
+					outFields: ['*'],
 					returnGeometry: true,
 				})
 				.then((featureSet) => {
@@ -257,9 +230,11 @@ export default class InspectionListViewModel extends Widget {
 		}
 	};
 	listCreated = (elm: Element): void => {
-		elm.addEventListener('calciteListChange', (e) => {
-			const objectId = parseInt((e as any).detail.keys().next().value);
-			this.calciteListChanged(objectId);
+		elm.addEventListener('calciteListChange', () => {
+			const selected = elm.querySelector('calcite-value-list-item[selected]');
+			if (selected) {
+				this.calciteListChanged(parseInt(selected?.getAttribute('value') as string));
+			}
 		});
 
 		elm.addEventListener('calciteListOrderChange', (e) => {

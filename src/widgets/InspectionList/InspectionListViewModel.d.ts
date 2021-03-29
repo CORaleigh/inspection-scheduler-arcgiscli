@@ -4,9 +4,9 @@ export default class InspectionListViewModel extends Widget {
     view: __esri.MapView | __esri.SceneView;
     inspections: __esri.Graphic[];
     inspectors: __esri.Graphic[];
+    name: string;
     layer: __esri.FeatureLayer;
     table: __esri.FeatureLayer;
-    locate: __esri.Locate;
     inspectionUpdate: __esri.PausableWatchHandle;
     layerView: __esri.FeatureLayerView;
     highlights: any;

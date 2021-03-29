@@ -13,7 +13,7 @@ export const featureLayer = new FeatureLayer({
 	definitionExpression: `PrimaryInspector = 'Timithy Driver' and IsCompleted = 'False'`,
 
 	popupTemplate: new PopupTemplate({
-		title: '{address}',
+		title: '#{InspectionOrder} {address}',
 		expressionInfos: [
 			{
 				name: 'inspections',

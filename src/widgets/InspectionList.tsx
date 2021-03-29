@@ -13,7 +13,7 @@ export interface InspectionListProperties extends __esri.WidgetProperties {
 
 	layer?: __esri.FeatureLayer;
 	table?: __esri.FeatureLayer;
-	locate?: __esri.Locate;
+	name?: string;
 }
 
 const CSS = {
@@ -30,13 +30,14 @@ export default class InspectionList extends Widget {
 	@aliasOf('viewModel.inspectors')
 	inspectors!: __esri.Graphic[];
 	@aliasOf('viewModel.layer')
-	layer!: __esri.FeatureLayer[];
+	layer!: __esri.FeatureLayer;
 	@aliasOf('viewModel.table')
-	table!: __esri.FeatureLayer[];
-	@aliasOf('viewModel.locate')
-	locate!: __esri.Locate;
+	table!: __esri.FeatureLayer;
 	@aliasOf('viewModel.inspectionUpdate')
 	inspectionUpdate!: __esri.PausableWatchHandle;
+	@renderable()
+	@aliasOf('viewModel.name')
+	name!: string;
 	@property({
 		type: InspectionListViewModel,
 	})
@@ -60,7 +61,19 @@ export default class InspectionList extends Widget {
 					dir="ltr"
 					calcite-hydrated=""
 					afterCreate={this.viewModel.comboboxCreated}
-				></calcite-combobox>
+				>
+					{this.inspectors.map((inspector) => {
+						return (
+							<calcite-combobox-item
+								value={inspector.getAttribute('PrimaryInspector')}
+								key={inspector.getAttribute('PrimaryInspector')}
+								text-label={inspector.getAttribute('PrimaryInspector')}
+								placeholder="Select inspector"
+								selected={inspector.getAttribute('PrimaryInspector') === this.name}
+							></calcite-combobox-item>
+						);
+					})}
+				</calcite-combobox>
 				{this.inspections.length ? (
 					''
 				) : (
