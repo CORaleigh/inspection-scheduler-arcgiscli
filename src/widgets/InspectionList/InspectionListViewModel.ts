@@ -189,6 +189,9 @@ export default class InspectionListViewModel extends Widget {
 					if (node) {
 						node.innerHTML +=
 							'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
+						if (window.innerWidth <= 545) {
+							node.innerHTML += '<style>.description{display:none;};';
+						}
 					}
 				});
 				observer.disconnect();

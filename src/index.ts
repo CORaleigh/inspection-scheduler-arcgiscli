@@ -24,30 +24,38 @@ const loginRequest = {
 	scopes: ['user.read'], // optional Array<string>
 };
 
-msalInstance
-	.loginPopup(loginRequest)
-	.then((response) => {
-		const name: string = response.account?.name?.split(',').reverse().join(' ').trimStart() as string;
-		const view = new MapView({
-			container: 'viewDiv',
-			map,
-			extent: {
-				xmin: -78.995,
-				ymin: 36.077,
-				xmax: -78.253,
-				ymax: 35.519,
-				spatialReference: {
-					wkid: 4326,
-				},
+function handleResponse() {
+	debugger;
+	const accounts = msalInstance.getAllAccounts();
+	let name = '';
+	if (accounts === null) {
+		// no accounts detected
+	} else if (accounts.length > 1) {
+		// Add choose account code here
+	} else if (accounts.length === 1) {
+		name = accounts[0].name?.split(',').reverse().join(' ').trimStart() as string;
+	}
+	const view = new MapView({
+		container: 'viewDiv',
+		map,
+		extent: {
+			xmin: -78.995,
+			ymin: 36.077,
+			xmax: -78.253,
+			ymax: 35.519,
+			spatialReference: {
+				wkid: 4326,
 			},
-		});
-		//view.when((view: MapView) => {
-		initWidgets(view, name);
-		//});
-	})
-	.catch((err) => {
-		console.log(err);
+		},
 	});
+	//view.when((view: MapView) => {
+	initWidgets(view, name);
+	//});
+}
+
+window.addEventListener('load', () => {
+	msalInstance.handleRedirectPromise().then(handleResponse);
+});
 
 if (window.innerWidth <= 768) {
 	document.querySelector('#viewDiv')?.classList.add('esri-hidden');

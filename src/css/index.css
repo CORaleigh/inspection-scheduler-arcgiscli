@@ -12,6 +12,7 @@ html, body {
   margin: 0;
   padding: 0;
   outline: none;
+  overflow: hidden;
 }
 
 body {
@@ -96,14 +97,27 @@ calcite-input {
   }
   calcite-radio-group {
     display: flex;
+    position: fixed;
+    bottom: 0;
   }
 
-  .content {
-    min-height: calc(100vh - 148px);
+  #inspectionPanel {
+    min-height: calc(100% - 160px);
+
   }
+
+
+  .content {
+    top: 68.8125px;
+    position: absolute;
+    bottom: 40.78125px;
+  }
+
+
 
 }
 
-:host([active]) .popper-container {
-  height: 80vh;
+
+calcite-combobox {
+  font-size: 16px;
 }
