@@ -61,19 +61,7 @@ export default class InspectionList extends Widget {
 					dir="ltr"
 					calcite-hydrated=""
 					afterCreate={this.viewModel.comboboxCreated}
-				>
-					{this.inspectors.map((inspector) => {
-						return (
-							<calcite-combobox-item
-								value={inspector.getAttribute('PrimaryInspector')}
-								key={inspector.getAttribute('PrimaryInspector')}
-								text-label={inspector.getAttribute('PrimaryInspector')}
-								placeholder="Select inspector"
-								selected={inspector.getAttribute('PrimaryInspector') === this.name}
-							></calcite-combobox-item>
-						);
-					})}
-				</calcite-combobox>
+				></calcite-combobox>
 				{this.inspections.length ? (
 					''
 				) : (

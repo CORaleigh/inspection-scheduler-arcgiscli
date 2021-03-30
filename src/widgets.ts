@@ -152,12 +152,14 @@ function getInspectors(inspectionList: InspectionList): void {
 
 export function initWidgets(view: __esri.MapView, name: string): __esri.MapView {
 	document.querySelector('calcite-radio-group')?.addEventListener('calciteRadioGroupChange', (e) => {
-		if ((e as any).detail === 'map') {
-			document.querySelector('#viewDiv')?.classList.remove('esri-hidden');
-			document.querySelector('#table')?.classList.add('esri-hidden');
-		} else {
-			document.querySelector('#viewDiv')?.classList.add('esri-hidden');
-			document.querySelector('#table')?.classList.remove('esri-hidden');
+		if (window.innerWidth <= 545) {
+			if ((e as any).detail === 'map') {
+				document.querySelector('#viewDiv')?.classList.remove('esri-hidden');
+				document.querySelector('#table')?.classList.add('esri-hidden');
+			} else {
+				document.querySelector('#viewDiv')?.classList.add('esri-hidden');
+				document.querySelector('#table')?.classList.remove('esri-hidden');
+			}
 		}
 	});
 

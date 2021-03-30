@@ -27,6 +27,18 @@ export default class InspectionListViewModel extends Widget {
 	inspectorsLoaded = (inspectors: __esri.Graphic[]) => {
 		this.inspectors = [...this.inspectors, ...inspectors];
 		const combobox = document.querySelector('calcite-combobox');
+		inspectors.forEach((inspector) => {
+			const item = document.createElement('calcite-combobox-item');
+			item.setAttribute('value', inspector.getAttribute('PrimaryInspector'));
+			item.setAttribute('text-label', inspector.getAttribute('PrimaryInspector'));
+			item.setAttribute('key', inspector.getAttribute('PrimaryInspector'));
+			item.setAttribute('placeholder', 'Select inspector');
+
+			if (inspector.getAttribute('PrimaryInspector') === 'Timithy Driver') {
+				item.setAttribute('selected', '');
+			}
+			combobox?.append(item);
+		});
 		combobox?.addEventListener('calciteComboboxItemChange', (e: any) => {
 			this.layer.definitionExpression = `PrimaryInspector = '${e.detail.getAttribute(
 				'value',

@@ -17,12 +17,6 @@ const msalConfig = {
 	},
 };
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-// msalInstance.handleRedirectCallback((error, response) => {
-// 	// handle redirect response or error
-// });
-const loginRequest = {
-	scopes: ['user.read'], // optional Array<string>
-};
 
 function handleResponse() {
 	debugger;
@@ -57,11 +51,11 @@ window.addEventListener('load', () => {
 	msalInstance.handleRedirectPromise().then(handleResponse);
 });
 
-if (window.innerWidth <= 768) {
+if (window.innerWidth <= 545) {
 	document.querySelector('#viewDiv')?.classList.add('esri-hidden');
 }
 window.addEventListener('resize', () => {
-	if (window.innerWidth <= 768) {
+	if (window.innerWidth <= 545) {
 		document.querySelector('#viewDiv')?.classList.add('esri-hidden');
 		document.querySelector('#table')?.classList.remove('esri-hidden');
 	} else {
