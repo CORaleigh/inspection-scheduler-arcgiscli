@@ -80,6 +80,7 @@ function createInspectionList(view: MapView, inspectionList: InspectionList) {
 		.queryFeatures({
 			where: featureLayer.definitionExpression,
 			outFields: ['*'],
+			returnGeometry: true,
 			// orderByFields: ['InspectionOrder ASC'],
 		})
 		.then((featureSet) => {

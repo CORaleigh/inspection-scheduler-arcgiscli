@@ -34,7 +34,7 @@ export default class InspectionListViewModel extends Widget {
 			item.setAttribute('key', inspector.getAttribute('PrimaryInspector'));
 			item.setAttribute('placeholder', 'Select inspector');
 
-			if (inspector.getAttribute('PrimaryInspector') === 'Timithy Driver') {
+			if (inspector.getAttribute('PrimaryInspector') === this.name) {
 				item.setAttribute('selected', '');
 			}
 			combobox?.append(item);
@@ -110,8 +110,9 @@ export default class InspectionListViewModel extends Widget {
 			top: e.srcElement.parentElement.offsetTop,
 			behavior: 'smooth',
 		});
-
-		this.layer.refresh();
+		this.layer.when((layer: __esri.FeatureLayer) => {
+			layer.refresh();
+		});
 	};
 
 	saveCreated = (elm: Element) => {
@@ -146,6 +147,9 @@ export default class InspectionListViewModel extends Widget {
 			});
 			this.layer.applyEdits({ updateFeatures: locations }).then((result) => {
 				console.log(result);
+				this.layer.when((layer: __esri.FeatureLayer) => {
+					layer.refresh();
+				});
 			});
 			// this.layer.applyEdits({ updateFeatures: this.inspections }).then(() => {
 			// 	setTimeout(() => {
@@ -263,7 +267,10 @@ export default class InspectionListViewModel extends Widget {
 					.querySelector(`calcite-value-list-item[value="${d}"] calcite-input`)
 					?.setAttribute('value', (i + 1).toString());
 			});
+			const labelInfo = this.layer.labelingInfo[0].clone();
 
+			this.layer.labelingInfo.pop();
+			this.layer.labelingInfo.push(labelInfo);
 			this.layer.refresh();
 		});
 	};

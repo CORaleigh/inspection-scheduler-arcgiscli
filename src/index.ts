@@ -19,32 +19,31 @@ const msalConfig = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 function handleResponse() {
-	debugger;
 	const accounts = msalInstance.getAllAccounts();
 	let name = '';
-	if (accounts === null) {
-		// no accounts detected
+	if (accounts.length === 0) {
+		msalInstance.loginRedirect();
 	} else if (accounts.length > 1) {
 		// Add choose account code here
 	} else if (accounts.length === 1) {
 		name = accounts[0].name?.split(',').reverse().join(' ').trimStart() as string;
-	}
-	const view = new MapView({
-		container: 'viewDiv',
-		map,
-		extent: {
-			xmin: -78.995,
-			ymin: 36.077,
-			xmax: -78.253,
-			ymax: 35.519,
-			spatialReference: {
-				wkid: 4326,
+		const view = new MapView({
+			container: 'viewDiv',
+			map,
+			extent: {
+				xmin: -78.995,
+				ymin: 36.077,
+				xmax: -78.253,
+				ymax: 35.519,
+				spatialReference: {
+					wkid: 4326,
+				},
 			},
-		},
-	});
-	//view.when((view: MapView) => {
-	initWidgets(view, name);
-	//});
+		});
+		//view.when((view: MapView) => {
+		initWidgets(view, name);
+		//});
+	}
 }
 
 window.addEventListener('load', () => {
