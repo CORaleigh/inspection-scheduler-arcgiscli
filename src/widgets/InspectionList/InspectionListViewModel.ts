@@ -142,10 +142,18 @@ export default class InspectionListViewModel extends Widget {
 					});
 				}
 			});
-			this.table.applyEdits({ updateFeatures: inspections }).then((result) => {
+			const updates: __esri.Graphic[] = [];
+			inspections.forEach((feature) => {
+				updates.push(new Graphic({ attributes: feature.attributes }));
+			});
+			this.table.applyEdits({ updateFeatures: updates }).then((result) => {
 				console.log(result);
 			});
-			this.layer.applyEdits({ updateFeatures: locations }).then((result) => {
+			const locationUpdates: __esri.Graphic[] = [];
+			locations.forEach((feature) => {
+				locationUpdates.push(new Graphic({ attributes: feature.attributes }));
+			});
+			this.layer.applyEdits({ updateFeatures: locationUpdates }).then((result) => {
 				console.log(result);
 				this.layer.when((layer: __esri.FeatureLayer) => {
 					layer.refresh();
@@ -184,7 +192,7 @@ export default class InspectionListViewModel extends Widget {
 			item.setAttribute('value', inspection.getAttribute('OBJECTID'));
 			item.dataset.oids = inspection.getAttribute('objectIds');
 			item.addEventListener('click', () => {
-				item.setAttribute('selected', '');
+				this.calciteListChanged(parseInt(item.getAttribute('value') as string));
 			});
 			const input = document.createElement('calcite-input');
 			input.setAttribute('label', inspection.attributes.Address);
@@ -193,7 +201,7 @@ export default class InspectionListViewModel extends Widget {
 			input.setAttribute('value', inspection.getAttribute('InspectionOrder'));
 			input.setAttribute('step', '1');
 			input.setAttribute('type', 'number');
-			input.setAttribute('number-button-type', 'horizontal');
+			input.setAttribute('number-button-type', 'vertical');
 
 			input.setAttribute('slot', 'actions-end');
 			input.setAttribute('alignment', 'start');
@@ -217,7 +225,11 @@ export default class InspectionListViewModel extends Widget {
 
 			input.addEventListener('calciteInputBlur', this.inputChanged);
 		});
-		this.layer.applyEdits({ updateFeatures: inspections }).then(() => {
+		const updates: __esri.Graphic[] = [];
+		inspections.forEach((feature) => {
+			updates.push(new Graphic({ attributes: feature.attributes }));
+		});
+		this.layer.applyEdits({ updateFeatures: updates }).then(() => {
 			this.inspectionUpdate.resume();
 			this.layer.refresh();
 		});
@@ -249,12 +261,12 @@ export default class InspectionListViewModel extends Widget {
 		}
 	};
 	listCreated = (elm: Element): void => {
-		elm.addEventListener('calciteListChange', () => {
-			const selected = elm.querySelector('calcite-value-list-item[selected]');
-			if (selected) {
-				this.calciteListChanged(parseInt(selected?.getAttribute('value') as string));
-			}
-		});
+		// elm.addEventListener('calciteListChange', () => {
+		// 	const selected = elm.querySelector('calcite-value-list-item[selected]');
+		// 	if (selected) {
+		// 		this.calciteListChanged(parseInt(selected?.getAttribute('value') as string));
+		// 	}
+		// });
 
 		elm.addEventListener('calciteListOrderChange', (e) => {
 			(e as any).detail.forEach((d: any, i: number) => {
@@ -279,23 +291,25 @@ export default class InspectionListViewModel extends Widget {
 		view.whenLayerView(this.layer).then((layerview) => {
 			this.layerView = layerview;
 		});
-		view.popup.watch('selectedFeature', (selectedFeature: __esri.Graphic) => {
-			if (selectedFeature) {
-				const oid = selectedFeature.getAttribute('OBJECTID');
-				document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
-				const item = document.querySelector(`calcite-value-list-item[value="${oid}"`);
-				item?.setAttribute('selected', '');
-			}
-		});
+		// view.popup.watch('selectedFeature', (selectedFeature: __esri.Graphic) => {
+		// 	if (selectedFeature) {
+		// 		const oid = selectedFeature.getAttribute('OBJECTID');
+		// 		document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
+		// 		const item = document.querySelector(`calcite-value-list-item[value="${oid}"`);
+		// 		item?.setAttribute('selected', '');
+		// 	}
+		// });
 		view.on('pointer-move', (event) => {
 			this.view.hitTest(event).then((response) => {
 				const graphic = response.results.filter((result) => {
 					return result.graphic.layer === this.layer;
 				})[0]?.graphic as __esri.Graphic;
-				const oid = graphic?.getAttribute('OBJECTID');
-				document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
-				const item = document.querySelector(`calcite-value-list-item[value="${oid}"`);
-				item?.setAttribute('selected', '');
+				if (graphic) {
+					const oid = graphic?.getAttribute('OBJECTID');
+					document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
+					const item = document.querySelector(`calcite-value-list-item[value="${oid}"`);
+					item?.setAttribute('selected', '');
+				}
 			});
 		});
 	}
