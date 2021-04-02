@@ -59,7 +59,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 						oids.forEach((oid) => {
 							let description = '';
 							let completed = 'True';
-							result[oid].features.forEach((relatedFeature: Graphic) => {
+							result[oid]?.features.forEach((relatedFeature: Graphic) => {
 								description += `${relatedFeature.getAttribute(
 									'LinkNumber',
 								)} - ${relatedFeature.getAttribute('InspectionType')} - ${relatedFeature.getAttribute(
@@ -72,20 +72,23 @@ export default class InspectionScheduleViewModel extends Accessor {
 							const locationFeature = featureSet.features.find((feature) => {
 								return feature.getObjectId() === oid;
 							});
-							locationFeature?.setAttribute('count', result[oid].features.length);
+							locationFeature?.setAttribute('count', result[oid]?.features.length);
 							locationFeature?.setAttribute('description', description);
 							locationFeature?.setAttribute('IsCompleted', completed);
 						});
 
-						this.inspections = featureSet.features.sort((a, b) => {
-							return a.getAttribute('InspectionOrder') - b.getAttribute('InspectionOrder');
-						});
+						this.inspections = [
+							...featureSet.features.sort((a, b) => {
+								return a.getAttribute('InspectionOrder') - b.getAttribute('InspectionOrder');
+							}),
+						];
 						this.feats = JSON.parse(JSON.stringify(this.inspections));
 						this.createLabelLayer();
 					});
 			});
 	};
-	inspectionsChanged = () => {
+
+	setObjectID = () => {
 		if (this.feats) {
 			this.feats.forEach((feat) => {
 				const insp = this.inspections.find((ins: esri.Graphic) => {
@@ -94,6 +97,10 @@ export default class InspectionScheduleViewModel extends Accessor {
 				insp.setAttribute('OBJECTID', feat.attributes.OBJECTID);
 			});
 		}
+	};
+
+	inspectionsChanged = () => {
+		this.setObjectID();
 	};
 	createLabelLayer = () => {
 		const renderer = (this.layer.renderer as __esri.SimpleRenderer).clone();
@@ -136,8 +143,21 @@ export default class InspectionScheduleViewModel extends Accessor {
 					document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
 					const item = document.querySelector(`calcite-value-list-item[value="${order}"`);
 					item?.setAttribute('selected', '');
+					document
+						.querySelector('calcite-value-list')
+						?.querySelectorAll('calcite-value-list-item')
+						.forEach((item) => {
+							item?.setAttribute('style', 'background-color: transparent');
+						});
+					document
+						.querySelector('calcite-value-list')
+						?.querySelector(`[value="${order}"]`)
+						?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
 				}
 			});
 		});
+		setInterval(() => {
+			this.inspectorChanged(this.inspector);
+		}, 60000);
 	}
 }

@@ -82,14 +82,7 @@ export default class InspectionSchedule extends Widget {
 		}
 	};
 	inputChanged = (e) => {
-		if (this.viewModel.feats) {
-			this.viewModel.feats.forEach((feat) => {
-				const insp = this.inspections.find((ins: esri.Graphic) => {
-					return ins.getAttribute('GlobalID') === feat.attributes.GlobalID;
-				}) as esri.Graphic;
-				insp.setAttribute('OBJECTID', feat.attributes.OBJECTID);
-			});
-		}
+		this.viewModel.setObjectID();
 		const inspection = this.inspections.find((inspection) => {
 			return inspection.getAttribute('OBJECTID') === parseInt(e.currentTarget.parentElement.value);
 		});
@@ -121,14 +114,7 @@ export default class InspectionSchedule extends Widget {
 		const updates = this.inspections.map((inspection) => {
 			return new Graphic({ attributes: inspection.attributes });
 		});
-		if (this.viewModel.feats) {
-			this.viewModel.feats.forEach((feat) => {
-				const insp = updates.find((ins: esri.Graphic) => {
-					return ins.getAttribute('GlobalID') === feat.attributes.GlobalID;
-				}) as esri.Graphic;
-				insp.setAttribute('OBJECTID', feat.attributes.OBJECTID);
-			});
-		}
+		this.viewModel.setObjectID();
 		this.layer.applyEdits({ updateFeatures: updates }).then(() => {
 			this.viewModel.createLabelLayer();
 		});
@@ -149,17 +135,21 @@ export default class InspectionSchedule extends Widget {
 							location: featureSet.features[0].geometry,
 						});
 					});
+				document
+					.querySelector('calcite-value-list')
+					?.querySelectorAll('calcite-value-list-item')
+					.forEach((item) => {
+						item?.setAttribute('style', 'background-color: transparent');
+					});
+				document
+					.querySelector('calcite-value-list')
+					?.querySelector(`[value="${order}"]`)
+					?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
 			}
 		});
 		elm.addEventListener('calciteListOrderChange', (e) => {
-			if (this.viewModel.feats) {
-				this.viewModel.feats.forEach((feat) => {
-					const insp = this.inspections.find((ins: esri.Graphic) => {
-						return ins.getAttribute('GlobalID') === feat.attributes.GlobalID;
-					}) as esri.Graphic;
-					insp.setAttribute('OBJECTID', feat.attributes.OBJECTID);
-				});
-			}
+			this.viewModel.setObjectID();
+
 			(e as any).detail.forEach((d: any, i: number) => {
 				const inspection = this.inspections.find((inspection) => {
 					return inspection.getAttribute('OBJECTID') === parseInt(d);
@@ -173,20 +163,14 @@ export default class InspectionSchedule extends Widget {
 			const updates = this.inspections.map((inspection) => {
 				return new Graphic({ attributes: inspection.attributes });
 			});
-			if (this.viewModel.feats) {
-				this.viewModel.feats.forEach((feat) => {
-					const insp = updates.find((ins: esri.Graphic) => {
-						return ins.getAttribute('GlobalID') === feat.attributes.GlobalID;
-					}) as esri.Graphic;
-					insp.attributes.OBJECTID = feat.attributes.OBJECTID;
-				});
-			}
+			this.viewModel.setObjectID();
+
 			this.layer.applyEdits({ updateFeatures: updates }).then(() => {
 				this.viewModel.createLabelLayer();
 			});
 		});
 	};
-	saveCreated = (elm: Element) => {};
+	// saveCreated = (elm: Element) => {};
 
 	render(): tsx.JSX.Element {
 		return (
@@ -248,7 +232,7 @@ export default class InspectionSchedule extends Widget {
 							);
 						})}
 					</calcite-value-list>
-					<calcite-button
+					{/* <calcite-button
 						afterCreate={this.saveCreated}
 						slot="footer"
 						appearance="solid"
@@ -261,7 +245,7 @@ export default class InspectionSchedule extends Widget {
 						calcite-hydrated=""
 					>
 						Save
-					</calcite-button>
+					</calcite-button> */}
 				</calcite-panel>
 			</div>
 		);

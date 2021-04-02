@@ -12,6 +12,7 @@ export default class InspectionScheduleViewModel extends Accessor {
     layerView: esri.FeatureLayerView;
     constructor(params?: any);
     inspectorChanged: (inspector: string) => void;
+    setObjectID: () => void;
     inspectionsChanged: () => void;
     createLabelLayer: () => void;
     init(view: esri.MapView | esri.SceneView): void;
