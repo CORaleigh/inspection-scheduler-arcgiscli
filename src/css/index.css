@@ -62,6 +62,8 @@ calcite-radio-group {
 }
 calcite-input {
   max-width: 130px;
+  min-width: 130px;
+
   margin: 1em;
 }
 .list-container {

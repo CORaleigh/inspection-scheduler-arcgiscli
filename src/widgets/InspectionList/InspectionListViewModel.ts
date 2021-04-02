@@ -4,7 +4,10 @@
 import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
 import { whenDefinedOnce, pausable, once } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import Widget from '@arcgis/core/widgets/Widget';
+import * as promiseUtils from '@arcgis/core/core/promiseUtils';
+
 @subclass('app.widgets.InspectionList.InspectionListViewModel')
 export default class InspectionListViewModel extends Widget {
 	@property() view!: __esri.MapView | __esri.SceneView;
@@ -16,6 +19,7 @@ export default class InspectionListViewModel extends Widget {
 	@property() inspectionUpdate!: __esri.PausableWatchHandle;
 	layerView!: __esri.FeatureLayerView;
 	highlights!: any;
+	labelLayer!: FeatureLayer;
 	constructor(params?: any) {
 		super(params);
 		whenDefinedOnce(this, 'view', this.init.bind(this));
@@ -110,9 +114,7 @@ export default class InspectionListViewModel extends Widget {
 			top: e.srcElement.parentElement.offsetTop,
 			behavior: 'smooth',
 		});
-		this.layer.when((layer: __esri.FeatureLayer) => {
-			layer.refresh();
-		});
+		this.createLabelLayer(this.inspections);
 	};
 
 	saveCreated = (elm: Element) => {
@@ -159,11 +161,89 @@ export default class InspectionListViewModel extends Widget {
 					layer.refresh();
 				});
 			});
-			// this.layer.applyEdits({ updateFeatures: this.inspections }).then(() => {
-			// 	setTimeout(() => {
-			// 		this.layer.refresh();
-			// 	}, 2000);
-			// });
+			this.createLabelLayer(locations);
+		});
+	};
+
+	updateList(inspections: __esri.Graphic[], list: any): Promise<null> {
+		return promiseUtils.create((resolve) => {
+			list.innerHTML = '';
+			inspections.forEach((inspection) => {
+				this.inspectionUpdate.pause();
+
+				const item = document.createElement('calcite-value-list-item');
+				item.setAttribute(
+					'label',
+					`${inspection.getAttribute('Address')} (${inspection.getAttribute('count')} ${
+						inspection.getAttribute('count') > 1 ? 'inspections' : 'inspection'
+					})`,
+				);
+				item.setAttribute('description', `${inspection.getAttribute('description')}`);
+				item.setAttribute('value', inspection.getAttribute('OBJECTID'));
+				item.dataset.oids = inspection.getAttribute('objectIds');
+				item.addEventListener('click', () => {
+					this.calciteListChanged(parseInt(item.getAttribute('value') as string));
+				});
+				const input = document.createElement('calcite-input');
+				input.setAttribute('label', inspection.attributes.Address);
+				input.setAttribute('min', '1');
+				input.setAttribute('max', (inspections.length + 1).toString());
+				input.setAttribute('value', inspection.getAttribute('InspectionOrder'));
+				input.setAttribute('step', '1');
+				input.setAttribute('type', 'number');
+				input.setAttribute('number-button-type', 'vertical');
+
+				input.setAttribute('slot', 'actions-end');
+				input.setAttribute('alignment', 'start');
+
+				item.append(input);
+				const observer: MutationObserver = new MutationObserver((mutations) => {
+					mutations.forEach((mutation) => {
+						const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
+						if (node) {
+							node.innerHTML +=
+								'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
+							if (window.innerWidth <= 545) {
+								node.innerHTML += '<style>.description{display:none;};';
+							}
+						}
+					});
+					observer.disconnect();
+				});
+				observer.observe(item.shadowRoot as Node, { childList: true });
+				list?.append(item);
+
+				input.addEventListener('calciteInputBlur', this.inputChanged);
+				input.addEventListener('click', (e: Event) => {
+					e.stopPropagation();
+				});
+				this.createLabelLayer(inspections);
+			});
+			resolve();
+		});
+	}
+
+	createLabelLayer = (features: __esri.Graphic[]) => {
+		const renderer = (this.layer.renderer as __esri.SimpleRenderer).clone();
+		if (this.labelLayer) {
+			this.view.map.remove(this.labelLayer);
+			this.labelLayer.destroy();
+		}
+		this.labelLayer = new FeatureLayer({
+			source: [],
+			renderer: renderer,
+			geometryType: this.layer.geometryType,
+			labelingInfo: this.layer.labelingInfo,
+			fields: this.layer.fields,
+			objectIdField: this.layer.objectIdField,
+			popupTemplate: this.layer.popupTemplate.clone(),
+		});
+		this.view.map.add(this.labelLayer);
+		this.view.whenLayerView(this.labelLayer).then((layerview) => {
+			this.layerView = layerview;
+		});
+		this.labelLayer.applyEdits({ addFeatures: features }).then((result) => {
+			console.log(result);
 		});
 	};
 
@@ -176,67 +256,31 @@ export default class InspectionListViewModel extends Widget {
 			return a.getAttribute('InspectionOrder') - b.getAttribute('InspectionOrder');
 		});
 		inspections.forEach((inspection, i) => {
-			this.inspectionUpdate.pause();
 			if (inspection.getAttribute('InspectionOrder') === 0 || !inspection.getAttribute('InspectionOrder')) {
 				inspection.setAttribute('InspectionOrder', i + 1);
 			}
-
-			const item = document.createElement('calcite-value-list-item');
-			item.setAttribute(
-				'label',
-				`${inspection.getAttribute('Address')} (${inspection.getAttribute('count')} ${
-					inspection.getAttribute('count') > 1 ? 'inspections' : 'inspection'
-				})`,
-			);
-			item.setAttribute('description', `${inspection.getAttribute('description')}`);
-			item.setAttribute('value', inspection.getAttribute('OBJECTID'));
-			item.dataset.oids = inspection.getAttribute('objectIds');
-			item.addEventListener('click', () => {
-				this.calciteListChanged(parseInt(item.getAttribute('value') as string));
-			});
-			const input = document.createElement('calcite-input');
-			input.setAttribute('label', inspection.attributes.Address);
-			input.setAttribute('min', '1');
-			input.setAttribute('max', (inspections.length + 1).toString());
-			input.setAttribute('value', inspection.getAttribute('InspectionOrder'));
-			input.setAttribute('step', '1');
-			input.setAttribute('type', 'number');
-			input.setAttribute('number-button-type', 'vertical');
-
-			input.setAttribute('slot', 'actions-end');
-			input.setAttribute('alignment', 'start');
-
-			item.append(input);
-			const observer: MutationObserver = new MutationObserver((mutations) => {
-				mutations.forEach((mutation) => {
-					const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
-					if (node) {
-						node.innerHTML +=
-							'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
-						if (window.innerWidth <= 545) {
-							node.innerHTML += '<style>.description{display:none;};';
-						}
-					}
-				});
-				observer.disconnect();
-			});
-			observer.observe(item.shadowRoot as Node, { childList: true });
-			list?.append(item);
-
-			input.addEventListener('calciteInputBlur', this.inputChanged);
 		});
-		const updates: __esri.Graphic[] = [];
-		inspections.forEach((feature) => {
-			updates.push(new Graphic({ attributes: feature.attributes }));
-		});
-		this.layer.applyEdits({ updateFeatures: updates }).then(() => {
-			this.inspectionUpdate.resume();
-			this.layer.refresh();
-		});
+		if (this.labelLayer) {
+			this.createLabelLayer(inspections);
+		}
+		if (list) {
+			this.updateList(inspections, list);
+		}
+		// this.updateList(inspections, list).then(() => {
+		// 	const updates: __esri.Graphic[] = [];
+		// 	inspections.forEach((feature) => {
+		// 		updates.push(new Graphic({ attributes: feature.attributes }));
+		// 	});
+		// 	// this.layer.applyEdits({ updateFeatures: updates }).then(() => {
+		// 	// 	debugger;
+		// 	// 	this.layer.refresh();
+		// 	// });
+
+		// });
 	}
 	calciteListChanged = (objectId: number) => {
 		if (objectId) {
-			this.layer
+			this.labelLayer
 				.queryFeatures({
 					objectIds: [objectId],
 					outFields: ['*'],
@@ -279,17 +323,17 @@ export default class InspectionListViewModel extends Widget {
 					.querySelector(`calcite-value-list-item[value="${d}"] calcite-input`)
 					?.setAttribute('value', (i + 1).toString());
 			});
-			const labelInfo = this.layer.labelingInfo[0].clone();
-
-			this.layer.labelingInfo.pop();
-			this.layer.labelingInfo.push(labelInfo);
-			this.layer.refresh();
+			if (this.labelLayer) {
+				this.createLabelLayer(this.inspections);
+			}
 		});
 	};
 	init(view: __esri.MapView | __esri.SceneView): void {
 		console.log(view.scale);
-		view.whenLayerView(this.layer).then((layerview) => {
-			this.layerView = layerview;
+
+		this.layer.visible = false;
+		view.whenLayerView(this.layer).then(() => {
+			//this.createLabelLayer([]);
 		});
 		// view.popup.watch('selectedFeature', (selectedFeature: __esri.Graphic) => {
 		// 	if (selectedFeature) {

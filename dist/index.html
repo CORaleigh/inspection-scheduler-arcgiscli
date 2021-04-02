@@ -1,10 +1,42 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="X-UA-Compatible" content="ie=edge"><meta name="mobile-web-app-capable" content="yes"><title>Inspection Scheduler</title><script>// Check that service workers are registered
-    if ('serviceWorker' in navigator) {
-      // Use the window load event to keep the page load performant
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("./service-worker.js")
-          .catch(function() {
-            console.log("Service Worker not loaded");
-          });
-      });
-    }</script><link rel="preload" href="./calcite/calcite.css" as="style"/><link rel="stylesheet" href="./calcite/calcite.css"/><script type="module" src="./calcite/calcite.esm.js"></script><script nomodule="" src="./calcite/calcite.js"></script><link rel="icon" href="favicon.ico"><link href="index.bundle.css" rel="stylesheet"></head><body><noscript>JavaScript is required in order to use this app</noscript><div class="app-container"><header class="header"><h2 class="heading">Inspection Scheduler</h2></header><div class="content"><div id="table"></div><div id="viewDiv"></div></div><calcite-radio-group layout="horizontal" appearance="solid" scale="m" width="full"><calcite-radio-group-item value="list" checked="checked" icon="list">List</calcite-radio-group-item><calcite-radio-group-item value="map" icon="map">Map</calcite-radio-group-item><input type="hidden"/></calcite-radio-group></div><script src="runtime.js"></script><script src="index.js"></script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Inspection Scheduler</title>
+  
+  <link rel="preload" type="text/css" href="./calcite/calcite.css" as="style" />
+
+  <link rel="stylesheet" type="text/css" href="./calcite/calcite.css" />
+<script type="module" src="./calcite/calcite.esm.js"></script>
+<script nomodule="" src="./calcite/calcite.js"></script>      
+<link rel="icon" href="favicon.ico"><link href="index.bundle.css" rel="stylesheet"></head>
+<body>
+  <noscript> JavaScript is required in order to use this app </noscript>
+  <div class="app-container">
+    <header class="header">
+      <h2 class="heading">Inspection Scheduler</h2>
+    </header>
+    <div class="content">
+      <div id="table"></div>      
+      <div id="viewDiv"></div>
+
+    </div>
+<calcite-radio-group
+  layout="horizontal"
+  appearance="solid"
+  scale="m"
+  width="full"
+>
+
+  <calcite-radio-group-item value="list" checked icon="list">List</calcite-radio-group-item>
+  <calcite-radio-group-item value="map" icon="map">Map</calcite-radio-group-item>
+  <input type="hidden" />
+</calcite-radio-group>
+
+  </div>
+<script src="runtime.js"></script><script src="index.js"></script></body>
+</html>
+
