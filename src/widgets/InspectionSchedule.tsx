@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import esri = __esri;
 
@@ -32,6 +33,9 @@ export default class InspectionSchedule extends Widget {
 	@aliasOf('viewModel.inspections')
 	inspections!: esri.Graphic[];
 	@renderable()
+	@aliasOf('viewModel.features')
+	features!: esri.Graphic[];
+	@renderable()
 	@aliasOf('viewModel.inspectors')
 	inspectors!: string[];
 	@renderable()
@@ -63,70 +67,104 @@ export default class InspectionSchedule extends Widget {
 		objectId: number,
 		inspection: __esri.Graphic,
 	): number | undefined => {
-		if (inspection.getAttribute('OBJECTID') === objectId) {
+		console.log(inspection.attributes.InspectionOrder, newOrder, oldOrder, inspection.attributes.Address);
+
+		if (inspection.attributes.OBJECTID === objectId) {
 			return newOrder;
 		} else if (newOrder > oldOrder) {
-			if (
-				inspection.getAttribute('InspectionOrder') <= newOrder &&
-				inspection.getAttribute('InspectionOrder') > oldOrder
-			) {
-				return inspection.getAttribute('InspectionOrder') - 1;
+			if (inspection.attributes.InspectionOrder <= newOrder && inspection.attributes.InspectionOrder > oldOrder) {
+				return inspection.attributes.InspectionOrder - 1;
+			} else {
+				return inspection.attributes.InspectionOrder;
+			}
+		} else if (newOrder < oldOrder) {
+			if (inspection.attributes.InspectionOrder >= newOrder && inspection.attributes.InspectionOrder < oldOrder) {
+				console.log(inspection.attributes.Address);
+				return inspection.attributes.InspectionOrder + 1;
+			} else {
 			}
 		} else {
-			if (
-				inspection.getAttribute('InspectionOrder') >= newOrder &&
-				inspection.getAttribute('InspectionOrder') < oldOrder
-			) {
-				return inspection.getAttribute('InspectionOrder') + 1;
-			}
+			return inspection.attributes.InspectionOrder;
 		}
 	};
-	inputChanged = (e) => {
-		this.viewModel.setObjectID();
-		const inspection = this.inspections.find((inspection) => {
-			return inspection.getAttribute('OBJECTID') === parseInt(e.currentTarget.parentElement.value);
-		});
-		const newOrder = parseInt(e.detail.value);
-		console.log(newOrder);
-		const oldOrder = inspection?.getAttribute('InspectionOrder');
-		console.log(oldOrder);
 
-		const oid = parseInt(e.currentTarget.parentElement.value);
-		this.inspections.forEach((inspection) => {
-			const newValue = this.updateOrder(newOrder, oldOrder, oid, inspection);
-			if (newValue) {
-				inspection.setAttribute('InspectionOrder', newValue);
-
-				document
-					.querySelector(
-						`calcite-value-list-item[value="${inspection.getAttribute('OBJECTID')}"] calcite-input`,
-					)
-					?.setAttribute('value', newValue.toString());
-			}
-		});
-
-		this.inspections = [
-			...this.inspections.sort((a, b) => {
-				return a.getAttribute('InspectionOrder') - b.getAttribute('InspectionOrder');
-			}),
-		];
-
-		const updates = this.inspections.map((inspection) => {
+	update = (features: Graphic[]) => {
+		const updates = features.map((inspection) => {
 			return new Graphic({ attributes: inspection.attributes });
 		});
 		this.viewModel.setObjectID();
 		this.layer.applyEdits({ updateFeatures: updates }).then(() => {
 			this.viewModel.createLabelLayer();
+
+			const oids = updates.map((feature) => {
+				return feature.attributes.OBJECTID;
+			});
+			this.layer
+				.queryRelatedFeatures({
+					relationshipId: 0,
+					objectIds: oids,
+					outFields: ['OBJECTID', 'InspectionOrder'],
+					returnGeometry: false,
+				})
+				.then((result) => {
+					const records: Graphic[] = [];
+					updates.forEach((update) => {
+						result[update.attributes.OBJECTID].features.forEach((record: Graphic) => {
+							record.attributes.InspectionOrder = update.attributes.InspectionOrder;
+							records.push(record);
+						});
+					});
+					this.table.applyEdits({ updateFeatures: records }).then((result) => {
+						console.log(result);
+					});
+				});
 		});
 	};
-	inputCreated = (elm: Element) => {
+	inputChanged = (e: any): void => {
+		this.viewModel.setObjectID();
+		const inspection = this.features.find((inspection) => {
+			return inspection.attributes.OBJECTID === parseInt(e.currentTarget.parentElement.value);
+		});
+		const oldOrder = inspection?.attributes.InspectionOrder;
+		console.log(oldOrder);
+		const newOrder = parseInt(e.detail.value);
+		console.log(newOrder);
+
+		this.viewModel.setObjectID();
+
+		const oid = parseInt(e.currentTarget.parentElement.value);
+		this.features.forEach((inspection) => {
+			const newValue = this.updateOrder(newOrder, oldOrder, oid, inspection);
+			if (newValue) {
+				inspection.attributes.InspectionOrder = newValue;
+				console.log(inspection.attributes.InspectionOrder);
+
+				// document
+				// 	.querySelector(`calcite-value-list-item[value="${inspection.attributes.OBJECTID}"] calcite-input`)
+				// 	?.setAttribute('value', newValue.toString());
+			}
+		});
+
+		this.features = [
+			...this.features.sort((a, b) => {
+				return a.attributes.InspectionOrder - b.attributes.InspectionOrder;
+			}),
+		];
+		//this.features = JSON.parse(JSON.stringify(this.inspections));
+		this.update(this.features);
+	};
+	inputCreated = (elm: Element): void => {
 		elm.addEventListener('calciteInputBlur', this.inputChanged);
 	};
 
-	listCreated = (elm: Element) => {
+	listCreated = (elm: Element): void => {
 		elm.addEventListener('calciteListChange', (e) => {
 			if ((e as any).detail.keys().next().value) {
-				const order = parseInt((e as any).detail.keys().next().value);
+				const oid = parseInt((e as any).detail.keys().next().value);
+				const feature = this.features.find((feature) => {
+					return feature.attributes.OBJECTID === oid;
+				}) as esri.Graphic;
+				const order = feature?.attributes.InspectionOrder;
 				this.viewModel.labelLayer
 					.queryFeatures({ where: `InspectionOrder = ${order}`, outFields: ['*'], returnGeometry: true })
 					.then((featureSet) => {
@@ -143,7 +181,7 @@ export default class InspectionSchedule extends Widget {
 					});
 				document
 					.querySelector('calcite-value-list')
-					?.querySelector(`[value="${order}"]`)
+					?.querySelector(`[value="${oid}"]`)
 					?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
 			}
 		});
@@ -151,24 +189,33 @@ export default class InspectionSchedule extends Widget {
 			this.viewModel.setObjectID();
 
 			(e as any).detail.forEach((d: any, i: number) => {
-				const inspection = this.inspections.find((inspection) => {
-					return inspection.getAttribute('OBJECTID') === parseInt(d);
-				});
-				inspection?.setAttribute('InspectionOrder', i + 1);
+				const inspection: esri.Graphic = this.features.find((inspection) => {
+					return inspection.attributes.OBJECTID === parseInt(d);
+				}) as esri.Graphic;
+				inspection.attributes.InspectionOrder = i + 1;
 
 				document
 					.querySelector(`calcite-value-list-item[value="${d}"] calcite-input`)
 					?.setAttribute('value', (i + 1).toString());
 			});
-			const updates = this.inspections.map((inspection) => {
-				return new Graphic({ attributes: inspection.attributes });
-			});
-			this.viewModel.setObjectID();
-
-			this.layer.applyEdits({ updateFeatures: updates }).then(() => {
-				this.viewModel.createLabelLayer();
-			});
+			this.update(this.features);
 		});
+	};
+	listItemCreated = (elm: Element) => {
+		const observer: MutationObserver = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				const node = (mutation.addedNodes[0] as HTMLElement).nextElementSibling?.shadowRoot;
+				if (node) {
+					node.innerHTML +=
+						'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
+					if (window.innerWidth <= 545) {
+						node.innerHTML += '<style>.description{display:none;};';
+					}
+				}
+			});
+			observer.disconnect();
+		});
+		observer.observe(elm.shadowRoot as Node, { childList: true });
 	};
 	// saveCreated = (elm: Element) => {};
 
@@ -207,21 +254,21 @@ export default class InspectionSchedule extends Widget {
 				)}
 				<calcite-panel dir="ltr" height-scale="m" intl-close="Close" theme="light" id="inspectionPanel">
 					<calcite-value-list dir="ltr" drag-enabled="" theme="light" afterCreate={this.listCreated}>
-						{this.inspections.map((inspection) => {
-							console.log(inspection.getObjectId());
+						{this.features.map((inspection) => {
 							return (
 								<calcite-value-list-item
-									label={`${inspection.getAttribute('Address')} (${inspection.getAttribute(
-										'count',
-									)} ${inspection.getAttribute('count') > 1 ? 'inspections' : 'inspection'})`}
-									description={`${inspection.getAttribute('description')}`}
-									key={inspection.getAttribute('OBJECTID')}
-									value={inspection.getAttribute('InspectionOrder')}
+									label={`${inspection.attributes.Address} (${inspection.attributes.count} ${
+										inspection.attributes.count > 1 ? 'inspections' : 'inspection'
+									})`}
+									description={`${inspection.attributes.description}`}
+									key={inspection.attributes.OBJECTID}
+									value={inspection.attributes.OBJECTID}
+									afterCreate={this.listItemCreated}
 								>
 									<calcite-input
 										min="1"
 										max={this.inspections.length.toString()}
-										value={inspection.getAttribute('InspectionOrder')}
+										value={inspection.attributes.InspectionOrder}
 										step="1"
 										type="number"
 										slot="actions-end"

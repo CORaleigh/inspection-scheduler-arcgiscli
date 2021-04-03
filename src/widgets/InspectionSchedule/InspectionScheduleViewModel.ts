@@ -15,7 +15,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 	@property() view!: esri.MapView | esri.SceneView;
 	@property() inspections!: esri.Graphic[];
 	@property() inspectors!: string[];
-	feats!: esri.Graphic[];
+	@property() features: esri.Graphic[] = [];
 	@property() inspector!: string;
 
 	@property() layer!: esri.FeatureLayer;
@@ -29,13 +29,12 @@ export default class InspectionScheduleViewModel extends Accessor {
 		watch(this, 'inspections', this.inspectionsChanged.bind(this));
 	}
 
-	inspectorChanged = (inspector: string) => {
-		console.log(inspector);
+	inspectorChanged = () => {
 		this.layer
 			.queryFeatures({
 				outFields: ['*'],
 				returnGeometry: true,
-				where: `PrimaryInspector = '${inspector}' and IsCompleted = 'False'`,
+				where: `PrimaryInspector = '${this.inspector}' and IsCompleted = 'False'`,
 			})
 			.then((featureSet) => {
 				const oids = featureSet.features.map((feature) => {
@@ -70,7 +69,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 								}
 							});
 							const locationFeature = featureSet.features.find((feature) => {
-								return feature.getObjectId() === oid;
+								return feature.getAttribute('OBJECTID') === oid;
 							});
 							locationFeature?.setAttribute('count', result[oid]?.features.length);
 							locationFeature?.setAttribute('description', description);
@@ -82,15 +81,15 @@ export default class InspectionScheduleViewModel extends Accessor {
 								return a.getAttribute('InspectionOrder') - b.getAttribute('InspectionOrder');
 							}),
 						];
-						this.feats = JSON.parse(JSON.stringify(this.inspections));
+						this.features = JSON.parse(JSON.stringify(this.inspections));
 						this.createLabelLayer();
 					});
 			});
 	};
 
 	setObjectID = () => {
-		if (this.feats) {
-			this.feats.forEach((feat) => {
+		if (this.features) {
+			this.features.forEach((feat) => {
 				const insp = this.inspections.find((ins: esri.Graphic) => {
 					return ins.getAttribute('GlobalID') === feat.attributes.GlobalID;
 				}) as esri.Graphic;
@@ -128,7 +127,9 @@ export default class InspectionScheduleViewModel extends Accessor {
 		this.labelLayer.applyEdits({ addFeatures: adds }).then((result) => {
 			console.log(result);
 			this.labelLayer.queryExtent({ where: '1=1' }).then((result) => {
-				this.view.goTo(result.extent.expand(1.5));
+				if (result.extent) {
+					this.view.goTo(result.extent.expand(1.5));
+				}
 			});
 		});
 	};
@@ -139,10 +140,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 					return result.graphic.layer === this.labelLayer;
 				})[0]?.graphic as __esri.Graphic;
 				if (graphic) {
-					const order = graphic?.getAttribute('InspectionOrder');
-					document.querySelector(`calcite-value-list-item[selected]`)?.removeAttribute('selected');
-					const item = document.querySelector(`calcite-value-list-item[value="${order}"`);
-					item?.setAttribute('selected', '');
+					const oid = graphic?.attributes.OBJECTID;
 					document
 						.querySelector('calcite-value-list')
 						?.querySelectorAll('calcite-value-list-item')
@@ -151,13 +149,19 @@ export default class InspectionScheduleViewModel extends Accessor {
 						});
 					document
 						.querySelector('calcite-value-list')
-						?.querySelector(`[value="${order}"]`)
-						?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
+						?.querySelector(`[value="${oid}"]`)
+						?.parentElement?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
+					const top = document.querySelector('calcite-value-list')?.querySelector(`[value="${oid}"]`)
+						?.parentElement?.offsetTop;
+					document.querySelector('calcite-panel')?.scrollTo({
+						top: top,
+						behavior: 'smooth',
+					});
 				}
 			});
 		});
 		setInterval(() => {
-			this.inspectorChanged(this.inspector);
+			this.inspectorChanged();
 		}, 60000);
 	}
 }

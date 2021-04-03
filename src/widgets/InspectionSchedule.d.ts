@@ -14,6 +14,7 @@ export interface InspectionScheduleProperties extends esri.WidgetProperties {
 export default class InspectionSchedule extends Widget {
     view: esri.MapView | esri.SceneView;
     inspections: esri.Graphic[];
+    features: esri.Graphic[];
     inspectors: string[];
     inspector: string;
     layer: esri.FeatureLayer;
@@ -22,8 +23,10 @@ export default class InspectionSchedule extends Widget {
     constructor(properties?: InspectionScheduleProperties);
     comboboxCreated: (elm: Element) => void;
     updateOrder: (newOrder: number, oldOrder: number, objectId: number, inspection: __esri.Graphic) => number | undefined;
+    update: (features: Graphic[]) => void;
     inputChanged: (e: any) => void;
     inputCreated: (elm: Element) => void;
     listCreated: (elm: Element) => void;
+    listItemCreated: (elm: Element) => void;
     render(): tsx.JSX.Element;
 }
