@@ -28,5 +28,6 @@ export default class InspectionSchedule extends Widget {
     inputCreated: (elm: Element) => void;
     listCreated: (elm: Element) => void;
     listItemCreated: (elm: Element) => void;
+    panelCreated: (element: Element) => void;
     render(): tsx.JSX.Element;
 }

@@ -208,9 +208,6 @@ export default class InspectionSchedule extends Widget {
 				if (node) {
 					node.innerHTML +=
 						'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
-					if (window.innerWidth <= 545) {
-						node.innerHTML += '<style>.description{display:none;};';
-					}
 				}
 			});
 			observer.disconnect();
@@ -218,7 +215,23 @@ export default class InspectionSchedule extends Widget {
 		observer.observe(elm.shadowRoot as Node, { childList: true });
 	};
 	// saveCreated = (elm: Element) => {};
-
+	panelCreated = (element: Element) => {
+		// const observer: MutationObserver = new MutationObserver((mutations) => {
+		// 	mutations.forEach((mutation) => {
+		// 		debugger;
+		// 		(mutation.addedNodes[0] as HTMLElement)
+		// 			.querySelector('.content-container')
+		// 			?.setAttribute('style', 'height: 100%;width:100%;position:absolute;top:0;right:0;left:0;bottom:0;');
+		// 	});
+		// 	observer.disconnect();
+		// });
+		setTimeout(() => {
+			element.shadowRoot
+				?.querySelector('.content-container')
+				?.setAttribute('style', 'height: 100%;position:absolute;');
+			//observer.observe(element?.shadowRoot as Node, { childList: true });
+		}, 1000);
+	};
 	render(): tsx.JSX.Element {
 		return (
 			<div class={CSS.base}>
@@ -252,7 +265,14 @@ export default class InspectionSchedule extends Widget {
 						<div class="inner">All inspections have been completed</div>
 					</div>
 				)}
-				<calcite-panel dir="ltr" height-scale="m" intl-close="Close" theme="light" id="inspectionPanel">
+				<calcite-panel
+					dir="ltr"
+					height-scale="m"
+					intl-close="Close"
+					theme="light"
+					id="inspectionPanel"
+					afterCreate={this.panelCreated}
+				>
 					<calcite-value-list dir="ltr" drag-enabled="" theme="light" afterCreate={this.listCreated}>
 						{this.features.map((inspection) => {
 							return (
@@ -260,7 +280,7 @@ export default class InspectionSchedule extends Widget {
 									label={`${inspection.attributes.Address} (${inspection.attributes.count} ${
 										inspection.attributes.count > 1 ? 'inspections' : 'inspection'
 									})`}
-									description={`${inspection.attributes.description}`}
+									description={window.innerWidth >= 545 ? `${inspection.attributes.description}` : ''}
 									key={inspection.attributes.OBJECTID}
 									value={inspection.attributes.OBJECTID}
 									afterCreate={this.listItemCreated}

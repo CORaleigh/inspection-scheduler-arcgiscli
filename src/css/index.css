@@ -66,13 +66,17 @@ calcite-input {
 
   margin: 1em;
 }
+
+calcite-input input {
+  font-size: 16px  !important;
+
+}
 .list-container {
   height: 80vh !important;
 }
 
 #inspectionPanel {
   min-height: calc(100% - 50px);
-
   overflow: auto;
 }
 .message {
