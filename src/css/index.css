@@ -127,3 +127,8 @@ calcite-input input {
 calcite-combobox {
   font-size: 16px;
 }
+
+calcite-value-list {
+  height: 100%;
+  overflow: auto;
+}

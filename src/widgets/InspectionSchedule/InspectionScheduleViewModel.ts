@@ -153,10 +153,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 						?.parentElement?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
 					const top = document.querySelector('calcite-value-list')?.querySelector(`[value="${oid}"]`)
 						?.parentElement?.offsetTop;
-					document.querySelector('calcite-panel')?.scrollTo({
-						top: top,
-						behavior: 'smooth',
-					});
+					document.querySelector('calcite-value-list')?.scrollTo({ top: top, behavior: 'smooth' });
 				}
 			});
 		});

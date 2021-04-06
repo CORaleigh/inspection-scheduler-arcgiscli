@@ -157,48 +157,54 @@ export default class InspectionSchedule extends Widget {
 		elm.addEventListener('calciteInputBlur', this.inputChanged);
 	};
 
-	listCreated = (elm: Element): void => {
-		elm.addEventListener('calciteListChange', (e) => {
-			if ((e as any).detail.keys().next().value) {
-				const oid = parseInt((e as any).detail.keys().next().value);
-				const feature = this.features.find((feature) => {
-					return feature.attributes.OBJECTID === oid;
-				}) as esri.Graphic;
-				const order = feature?.attributes.InspectionOrder;
-				this.viewModel.labelLayer
-					.queryFeatures({ where: `InspectionOrder = ${order}`, outFields: ['*'], returnGeometry: true })
-					.then((featureSet) => {
-						this.view.popup.open({
-							features: featureSet.features,
-							location: featureSet.features[0].geometry,
-						});
-					});
-				document
-					.querySelector('calcite-value-list')
-					?.querySelectorAll('calcite-value-list-item')
-					.forEach((item) => {
-						item?.setAttribute('style', 'background-color: transparent');
-					});
-				document
-					.querySelector('calcite-value-list')
-					?.querySelector(`[value="${oid}"]`)
-					?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
-			}
-		});
-		elm.addEventListener('calciteListOrderChange', (e) => {
-			this.viewModel.setObjectID();
-
-			(e as any).detail.forEach((d: any, i: number) => {
-				const inspection: esri.Graphic = this.features.find((inspection) => {
-					return inspection.attributes.OBJECTID === parseInt(d);
-				}) as esri.Graphic;
-				inspection.attributes.InspectionOrder = i + 1;
-
-				document
-					.querySelector(`calcite-value-list-item[value="${d}"] calcite-input`)
-					?.setAttribute('value', (i + 1).toString());
+	calciteListChanged = (oid: number) => {
+		const feature = this.features.find((feature) => {
+			return feature.attributes.OBJECTID === oid;
+		}) as esri.Graphic;
+		const order = feature?.attributes.InspectionOrder;
+		this.viewModel.labelLayer
+			.queryFeatures({ where: `InspectionOrder = ${order}`, outFields: ['*'], returnGeometry: true })
+			.then((featureSet) => {
+				this.view.popup.open({
+					features: featureSet.features,
+					location: featureSet.features[0].geometry,
+				});
 			});
-			this.update(this.features);
+		document
+			.querySelector('calcite-value-list')
+			?.querySelectorAll('calcite-value-list-item')
+			.forEach((item) => {
+				item?.setAttribute('style', 'background-color: transparent');
+			});
+		document
+			.querySelector('calcite-value-list')
+			?.querySelector(`[value="${oid}"]`)
+			?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
+	};
+
+	listCreated = (elm: Element): void => {
+		setTimeout(() => {
+			elm.addEventListener('calciteListChange', (e: any) => {
+				if ((e as any).detail.keys().next().value) {
+					const oid = parseInt((e as any).detail.keys().next().value);
+					this.calciteListChanged(oid);
+				}
+			});
+			elm.addEventListener('calciteListOrderChange', (e) => {
+				this.viewModel.setObjectID();
+
+				(e as any).detail.forEach((d: any, i: number) => {
+					const inspection: esri.Graphic = this.features.find((inspection) => {
+						return inspection.attributes.OBJECTID === parseInt(d);
+					}) as esri.Graphic;
+					inspection.attributes.InspectionOrder = i + 1;
+
+					document
+						.querySelector(`calcite-value-list-item[value="${d}"] calcite-input`)
+						?.setAttribute('value', (i + 1).toString());
+				});
+				this.update(this.features);
+			});
 		});
 	};
 	listItemCreated = (elm: Element) => {
@@ -216,18 +222,17 @@ export default class InspectionSchedule extends Widget {
 			observer.disconnect();
 		});
 		observer.observe(elm.shadowRoot as Node, { childList: true });
+		elm.addEventListener('click', () => {
+			this.calciteListChanged(parseInt(elm.getAttribute('value') as string));
+		});
 	};
 	// saveCreated = (elm: Element) => {};
 	panelCreated = (element: Element) => {
 		const observer: MutationObserver = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
-				debugger;
 				(mutation.addedNodes[0] as HTMLElement)
 					.querySelector('.content-container')
-					?.setAttribute(
-						'style',
-						'padding-left:1em;height: 100%;width:100%;position:absolute;top:0;right:0;left:0;bottom:0;',
-					);
+					?.setAttribute('style', 'height: 100%;width:100%;position:absolute;top:0;right:0;left:0;bottom:0;');
 			});
 			observer.disconnect();
 		});
