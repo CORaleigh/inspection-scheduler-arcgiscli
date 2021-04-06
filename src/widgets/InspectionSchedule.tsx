@@ -209,6 +209,9 @@ export default class InspectionSchedule extends Widget {
 					node.innerHTML +=
 						'<style>.description{white-space: pre-line;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size: 0.8rem !important} .title{font-size: 0.9rem !important;}';
 				}
+				if (mutation.attributeName === 'class') {
+					debugger;
+				}
 			});
 			observer.disconnect();
 		});
@@ -216,21 +219,25 @@ export default class InspectionSchedule extends Widget {
 	};
 	// saveCreated = (elm: Element) => {};
 	panelCreated = (element: Element) => {
-		// const observer: MutationObserver = new MutationObserver((mutations) => {
-		// 	mutations.forEach((mutation) => {
-		// 		debugger;
-		// 		(mutation.addedNodes[0] as HTMLElement)
-		// 			.querySelector('.content-container')
-		// 			?.setAttribute('style', 'height: 100%;width:100%;position:absolute;top:0;right:0;left:0;bottom:0;');
-		// 	});
-		// 	observer.disconnect();
-		// });
-		setTimeout(() => {
-			element.shadowRoot
-				?.querySelector('.content-container')
-				?.setAttribute('style', 'height: 100%;position:absolute;');
-			//observer.observe(element?.shadowRoot as Node, { childList: true });
-		}, 1000);
+		const observer: MutationObserver = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				debugger;
+				(mutation.addedNodes[0] as HTMLElement)
+					.querySelector('.content-container')
+					?.setAttribute(
+						'style',
+						'padding-left:1em;height: 100%;width:100%;position:absolute;top:0;right:0;left:0;bottom:0;',
+					);
+			});
+			observer.disconnect();
+		});
+		// setTimeout(() => {
+		// 	element.shadowRoot
+		// 		?.querySelector('.content-container')
+		// 		?.setAttribute('style', 'height: 100%;position:absolute;');
+		// 	//observer.observe(element?.shadowRoot as Node, { childList: true });
+		// }, 1000);
+		observer.observe(element?.shadowRoot as Node, { childList: true });
 	};
 	render(): tsx.JSX.Element {
 		return (
