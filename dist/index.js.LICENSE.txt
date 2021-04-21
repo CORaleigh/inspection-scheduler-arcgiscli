@@ -16,3 +16,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! @azure/msal-browser v2.13.0 2021-03-24 */
 
 /*! @azure/msal-common v4.1.0 2021-03-24 */
+
+/**!
+ * Sortable 1.10.2
+ * @author	RubaXa   <trash@rubaxa.org>
+ * @author	owenm    <owen23355@gmail.com>
+ * @license MIT
+ */

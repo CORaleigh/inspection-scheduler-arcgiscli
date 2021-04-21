@@ -8,8 +8,9 @@ import { property, subclass } from '@arcgis/core/core/accessorSupport/decorators
 
 import { watch, whenDefinedOnce } from '@arcgis/core/core/watchUtils';
 import Graphic from '@arcgis/core/Graphic';
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import Extent from '@arcgis/core/geometry/Extent';
 
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 @subclass('app.widgets.InspectionSchedule.InspectionScheduleViewModel')
 export default class InspectionScheduleViewModel extends Accessor {
 	@property() view!: esri.MapView | esri.SceneView;
@@ -30,6 +31,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 	}
 
 	inspectorChanged = () => {
+		this.layer.definitionExpression = `PrimaryInspector = '${this.inspector}' and IsCompleted = 'False'`;
 		this.layer
 			.queryFeatures({
 				outFields: ['*'],
@@ -52,18 +54,20 @@ export default class InspectionScheduleViewModel extends Accessor {
 						relationshipId: 0,
 						objectIds: oids,
 						outFields: ['*'],
-						where: `InspectionStatus <> 'Canceled'`,
+						where: `IsCompleted = 'False'`,
 					})
 					.then((result) => {
 						oids.forEach((oid) => {
 							let description = '';
 							let completed = 'True';
 							result[oid]?.features.forEach((relatedFeature: Graphic) => {
-								description += `${relatedFeature.getAttribute(
+								description += `<a href="https://raleighnc-energov.tylerhost.net/apps/manageinspection/#/inspection/${relatedFeature.getAttribute(
+									'IMInspectionID',
+								)}" target="_blank">${relatedFeature.getAttribute(
 									'LinkNumber',
-								)} - ${relatedFeature.getAttribute('InspectionType')} - ${relatedFeature.getAttribute(
-									'InspectionStatus',
-								)}\n`;
+								)}</a> - ${relatedFeature.getAttribute(
+									'InspectionType',
+								)} - ${relatedFeature.getAttribute('InspectionStatus')}\n`;
 								if (relatedFeature.getAttribute('IsCompleted') === 'False') {
 									completed = 'False';
 								}
@@ -105,7 +109,7 @@ export default class InspectionScheduleViewModel extends Accessor {
 		const renderer = (this.layer.renderer as __esri.SimpleRenderer).clone();
 		if (this.labelLayer) {
 			this.view.map.remove(this.labelLayer);
-			this.labelLayer.destroy();
+			//this.labelLayer.destroy();
 		}
 		this.labelLayer = new FeatureLayer({
 			source: [],
@@ -124,18 +128,33 @@ export default class InspectionScheduleViewModel extends Accessor {
 			return new Graphic({ attributes: inspection.attributes, geometry: inspection.geometry });
 		});
 
-		this.labelLayer.applyEdits({ addFeatures: adds }).then((result) => {
-			console.log(result);
-			this.labelLayer.queryExtent({ where: '1=1' }).then((result) => {
-				if (result.extent) {
-					this.view.goTo(result.extent.expand(1.5));
-				}
-			});
+		this.labelLayer.applyEdits({ addFeatures: adds }).then(() => {
+			if (adds.length < 2) {
+				debugger;
+				this.view.goTo(
+					new Extent({
+						xmin: -78.995,
+						ymin: 36.077,
+						xmax: -78.253,
+						ymax: 35.519,
+						spatialReference: {
+							wkid: 4326,
+						},
+					}),
+				);
+			} else {
+				this.labelLayer.queryExtent({ where: '1=1' }).then((result) => {
+					if (result.extent) {
+						this.view.goTo(result.extent.expand(1.5));
+					}
+				});
+			}
 		});
 	};
 	init(view: esri.MapView | esri.SceneView): void {
 		view.on('pointer-move', (event) => {
 			this.view.hitTest(event).then((response) => {
+				console.log(response.results);
 				const graphic = response.results.filter((result) => {
 					return result.graphic.layer === this.labelLayer;
 				})[0]?.graphic as __esri.Graphic;

@@ -27,8 +27,10 @@ export default class InspectionSchedule extends Widget {
     inputChanged: (e: any) => void;
     inputCreated: (elm: Element) => void;
     calciteListChanged: (oid: number) => void;
+    listChanged: (oid: number) => void;
     listCreated: (elm: Element) => void;
     listItemCreated: (elm: Element) => void;
     panelCreated: (element: Element) => void;
+    draggableCreated: (elm: HTMLElement) => void;
     render(): tsx.JSX.Element;
 }

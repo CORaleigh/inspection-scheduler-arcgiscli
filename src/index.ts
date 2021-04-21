@@ -40,9 +40,7 @@ function handleResponse() {
 				},
 			},
 		});
-		//view.when((view: MapView) => {
 		initWidgets(view, name);
-		//});
 	}
 }
 

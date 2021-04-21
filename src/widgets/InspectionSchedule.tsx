@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import esri = __esri;
+import Sortable from 'sortablejs';
 
 import { aliasOf, property, subclass } from '@arcgis/core/core/accessorSupport/decorators';
 
@@ -10,7 +11,6 @@ import Widget from '@arcgis/core/widgets/Widget';
 
 import InspectionScheduleViewModel from './InspectionSchedule/InspectionScheduleViewModel';
 import Graphic from '@arcgis/core/Graphic';
-
 export interface InspectionScheduleProperties extends esri.WidgetProperties {
 	view?: esri.MapView | esri.SceneView;
 	inspections?: esri.Graphic[];
@@ -122,8 +122,9 @@ export default class InspectionSchedule extends Widget {
 	};
 	inputChanged = (e: any): void => {
 		this.viewModel.setObjectID();
+		debugger;
 		const inspection = this.features.find((inspection) => {
-			return inspection.attributes.OBJECTID === parseInt(e.currentTarget.parentElement.value);
+			return inspection.attributes.OBJECTID === e.currentTarget.closest('li').value;
 		});
 		const oldOrder = inspection?.attributes.InspectionOrder;
 		console.log(oldOrder);
@@ -132,7 +133,7 @@ export default class InspectionSchedule extends Widget {
 
 		this.viewModel.setObjectID();
 
-		const oid = parseInt(e.currentTarget.parentElement.value);
+		const oid = e.currentTarget.closest('li').value;
 		this.features.forEach((inspection) => {
 			const newValue = this.updateOrder(newOrder, oldOrder, oid, inspection);
 			if (newValue) {
@@ -181,7 +182,30 @@ export default class InspectionSchedule extends Widget {
 			?.querySelector(`[value="${oid}"]`)
 			?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
 	};
-
+	listChanged = (oid: number) => {
+		const feature = this.features.find((feature) => {
+			return feature.attributes.OBJECTID === oid;
+		}) as esri.Graphic;
+		const order = feature?.attributes.InspectionOrder;
+		this.viewModel.labelLayer
+			.queryFeatures({ where: `InspectionOrder = ${order}`, outFields: ['*'], returnGeometry: true })
+			.then((featureSet) => {
+				this.view.popup.open({
+					features: featureSet.features,
+					location: featureSet.features[0].geometry,
+				});
+			});
+		document.querySelectorAll('.draggable calcite-card')?.forEach((item) => {
+			item?.shadowRoot?.querySelector('.container')?.setAttribute('style', 'background-color: transparent');
+			item.querySelector('.subtitle')?.setAttribute('style', 'color: var(--calcite-ui-text-1)');
+			//item.querySelector('.title')?.setAttribute('style', 'color: var(--calcite-ui-text-1)');
+		});
+		const card = document?.querySelector(`.draggable li[value="${oid}"] calcite-card`);
+		const container = card?.shadowRoot?.querySelector('.container');
+		container?.setAttribute('style', 'background-color: var(--calcite-ui-brand)');
+		card?.querySelector('.subtitle')?.setAttribute('style', 'color:var(--calcite-ui-text-1)');
+		//card?.querySelector('.title')?.setAttribute('style', 'color:var(--calcite-ui-text-inverse)');
+	};
 	listCreated = (elm: Element): void => {
 		setTimeout(() => {
 			elm.addEventListener('calciteListChange', (e: any) => {
@@ -244,6 +268,24 @@ export default class InspectionSchedule extends Widget {
 		// }, 1000);
 		observer.observe(element?.shadowRoot as Node, { childList: true });
 	};
+
+	draggableCreated = (elm: HTMLElement) => {
+		Sortable.create(elm, {
+			onEnd: (event: any) => {
+				this.viewModel.setObjectID();
+
+				event.from.childNodes.forEach((node: any, i: number) => {
+					const inspection: esri.Graphic = this.features.find((inspection) => {
+						return inspection.attributes.OBJECTID === parseInt(node.value);
+					}) as esri.Graphic;
+					inspection.attributes.InspectionOrder = i + 1;
+
+					node.querySelector(`calcite-input`)?.setAttribute('value', (i + 1).toString());
+				});
+				this.update(this.features);
+			},
+		});
+	};
 	render(): tsx.JSX.Element {
 		return (
 			<div class={CSS.base}>
@@ -255,6 +297,7 @@ export default class InspectionSchedule extends Widget {
 					max-items="0"
 					dir="ltr"
 					calcite-hydrated=""
+					theme="dark"
 					afterCreate={this.comboboxCreated}
 				>
 					{this.inspectors.map((inspector) => {
@@ -277,7 +320,42 @@ export default class InspectionSchedule extends Widget {
 						<div class="inner">All inspections have been completed</div>
 					</div>
 				)}
-				<calcite-panel
+				<ul class="draggable" afterCreate={this.draggableCreated}>
+					{this.features.map((inspection) => {
+						return (
+							<li
+								key={inspection.attributes.OBJECTID}
+								value={inspection.attributes.OBJECTID}
+								onclick={() => {
+									console.log(inspection.attributes.OBJECTID);
+									this.listChanged(inspection.attributes.OBJECTID);
+								}}
+							>
+								<calcite-card theme="dark">
+									<div slot="title" class="title">
+										<h3>{`${inspection.attributes.Address} (${inspection.attributes.count} inspections)`}</h3>
+										<calcite-input
+											min="1"
+											max={this.inspections.length.toString()}
+											value={inspection.attributes.InspectionOrder}
+											step="1"
+											type="number"
+											alignment="start"
+											afterCreate={this.inputCreated}
+										></calcite-input>
+									</div>
+									<span
+										slot="subtitle"
+										class="subtitle"
+										innerHTML={inspection.attributes.description}
+									></span>
+								</calcite-card>
+							</li>
+						);
+					})}
+				</ul>
+
+				{/* <calcite-panel
 					dir="ltr"
 					height-scale="m"
 					intl-close="Close"
@@ -310,8 +388,8 @@ export default class InspectionSchedule extends Widget {
 								</calcite-value-list-item>
 							);
 						})}
-					</calcite-value-list>
-					{/* <calcite-button
+					</calcite-value-list> */}
+				{/* <calcite-button
 						afterCreate={this.saveCreated}
 						slot="footer"
 						appearance="solid"
@@ -325,7 +403,7 @@ export default class InspectionSchedule extends Widget {
 					>
 						Save
 					</calcite-button> */}
-				</calcite-panel>
+				{/* </calcite-panel> */}
 			</div>
 		);
 	}
